@@ -1,0 +1,34 @@
+/* 水印样式 */
+.watermark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    z-index: 10; /* 提高水印层级，确保在最上层 */
+    overflow: visible; /* 允许水印内容溢出容器 */
+}
+
+.watermark-input {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-25deg); /* 默认旋转角度为-25度 */
+    border: 3px solid #ff0000; /* 默认边框为红色，粗细为3磅 */
+    background: rgba(255, 255, 255, 0.2);
+    color: #ff0000;
+    font-size: 16px; /* 调整为16px */
+    font-weight: bold;
+    text-align: center;
+    width: auto; /* 默认宽度自适应内容 */
+    padding: 2px 4px; /* 上下2px，左右4px的内边距 */
+    pointer-events: auto; /* 允许与输入框交互 */
+    z-index: 15;
+    outline: none;
+    white-space: nowrap; /* 确保文本不会换行 */
+    box-sizing: content-box; /* 确保内边距不算入宽度 */
+}

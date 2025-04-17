@@ -1,0 +1,112 @@
+/* 右侧预览区域样式 */
+.preview-container {
+    flex: 1;
+    padding: 20px;
+    margin-left: 250px; /* 默认与左侧面板宽度匹配 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+/* 当左侧面板收起时，调整右侧区域 */
+.preview-container.expanded {
+    margin-left: 0; /* 完全消除左侧边距 */
+}
+
+.container {
+    max-width: 900px; /* 默认值，将通过JavaScript动态调整 */
+    width: 100%;
+    margin: 0 auto;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.2); /* 固定为强烈阴影 */
+    background-color: #FFFFFF; /* 默认内部背景色 */
+    border-radius: 15px; /* 固定圆角为15px */
+    overflow: hidden;
+    transition: max-width 0.3s;
+}
+
+/* 头部样式 */
+.header-wrapper {
+    position: relative;
+    width: 100%;
+    padding: 0; /* 移除内边距 */
+    margin: 0; /* 移除外边距 */
+}
+
+/* 底部样式 */
+.footer-wrapper {
+    position: relative;
+    width: 100%;
+    padding: 0; /* 移除内边距 */
+    margin: 0; /* 移除外边距 */
+}
+
+/* 网格布局 */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 20px;
+    justify-items: center; /* 确保产品项目在网格中居中 */
+}
+
+.product-item {
+    width: 100%; /* 使框架宽度能够响应调整 */
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto; /* 确保在网格单元格中居中 */
+}
+
+.product-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+    width: 100%;
+    height: 0;
+    padding-bottom: 152%; /* 产品图片固定比例(980/645 * 100%) */
+    position: relative;
+    background-color: #ffffff; /* 白色背景 */
+    border: 1px solid #e0e0e0; /* 浅灰色边框 */
+    border-radius: 0; /* 移除圆角 */
+    overflow: hidden;
+}
+
+.product-image img {
+    position: absolute;
+    width: 100%; /* 修改: 从max-width和width:auto改为固定100% */
+    height: 100%; /* 修改: 从max-height和height:auto改为固定100% */
+    top: 0; /* 修改: 从50%改为0 */
+    left: 0; /* 修改: 从50%改为0 */
+    transform: none; /* 修改: 移除translate变换 */
+    object-fit: cover; /* 修改: 从contain改为cover */
+}
+
+/* 头部和底部图片区域样式 */
+.header-image, .footer-image {
+    background-color: #ffffff; /* 白色背景 */
+    border: none; /* 移除边框 */
+    border-radius: 0; /* 移除圆角 */
+    overflow: hidden;
+    width: 100%; /* 确保宽度是100% */
+    height: 100%; /* 确保高度是100% */
+    position: relative;
+}
+
+/* 头部和底部图片样式 - 图片拉伸填满整个区域 */
+.header-image img,
+.footer-image img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    object-fit: cover; /* 图片拉伸填满整个区域 */
+    transform: none; /* 移除transform */
+}

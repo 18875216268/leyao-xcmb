@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品宣传模板设计器</title>
+    <link rel="stylesheet" href="zhu.css">
+    <link rel="stylesheet" href="ysfill/daohang.css">
+    <link rel="stylesheet" href="ysfill/kuangjia.css">
+    <link rel="stylesheet" href="ysfill/shuiyin.css">
+    <!-- 历史图片面板样式 -->
+    <link rel="stylesheet" href="ysfill/lishi.css">
+    <!-- 新增搜索和分页样式 -->
+    <link rel="stylesheet" href="ysfill/sousuo.css">
+</head>
+<body>
+    <div class="page-container">
+        <!-- 左侧设置面板 -->
+        <div class="settings-panel">
+            <div class="panel-section">
+                <h3>1.图片布局</h3>
+                <div class="setting-item">
+                    <label for="product-columns">每行显示数量:</label>
+                    <select id="product-columns">
+                        <option value="4" selected>4列</option>
+                        <option value="2">2列</option>
+                        <option value="3">3列</option>
+                        <option value="5">5列</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="product-gap">图片间距:</label>
+                    <input type="number" id="product-gap" value="20" min="5" max="50">
+                </div>
+                <div class="setting-item">
+                    <label for="product-count">产品图片数量:</label>
+                    <input type="number" id="product-count" value="8" min="1" max="30">
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3>2.页面布局</h3>
+                <div class="setting-item">
+                    <label for="container-width">框架宽度:</label>
+                    <input type="number" id="container-width" value="900" min="400" max="1600">
+                </div>
+                <div class="setting-item">
+                    <label for="header-height">头部高度:</label>
+                    <input type="number" id="header-height" value="380" min="100" max="800">
+                </div>
+                <div class="setting-item">
+                    <label for="footer-height">底部高度:</label>
+                    <input type="number" id="footer-height" value="165" min="50" max="400">
+                </div>
+                <div class="setting-item">
+                    <label for="exterior-background">外部背景:</label>
+                    <input type="color" id="exterior-background" value="#d6d6d6">
+                </div>
+                <div class="setting-item">
+                    <label for="interior-background">内部背景:</label>
+                    <input type="color" id="interior-background" value="#FFFFFF">
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3>3.水印文字</h3>
+                <div class="setting-item">
+                    <label for="watermark-enabled">水印开关:</label>
+                    <input type="checkbox" id="watermark-enabled" checked>
+                </div>
+                <div class="setting-item">
+                    <label for="watermark-color">文字颜色:</label>
+                    <input type="color" id="watermark-color" value="#ff0000">
+                </div>
+                <div class="setting-item">
+                    <label for="watermark-weight">文字粗细:</label>
+                    <select id="watermark-weight">
+                        <option value="normal">正常</option>
+                        <option value="bold" selected>粗体</option>
+                        <option value="lighter">细体</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="watermark-size">文字大小:</label>
+                    <input type="number" id="watermark-size" min="12" max="48" value="16">
+                    <span>px</span>
+                </div>
+                <div class="setting-item">
+                    <label for="watermark-border-color">边框颜色:</label>
+                    <input type="color" id="watermark-border-color" value="#ff0000">
+                </div>
+                <div class="setting-item">
+                    <label for="watermark-border">边框粗细:</label>
+                    <input type="number" id="watermark-border" min="0" max="5" value="3">
+                    <span>px</span>
+                </div>
+                <div class="setting-item">
+                    <label for="watermark-angle">旋转角度:</label>
+                    <input type="number" id="watermark-angle" min="-45" max="45" value="-15">
+                    <span>°</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 中间预览区域 -->
+        <div class="preview-container">
+            <div class="container">
+                <!-- 头部区域 - 更新提示文本 -->
+                <div class="header-wrapper">
+                    <div class="header-image">
+                        <img src="/api/placeholder/900/200" alt="头部宣传图" style="display: none;" id="header-img">
+                        <div class="delete-btn" style="display: none;" onclick="deleteImage('header-img')">×</div>
+                        <label class="upload-btn" for="upload-header">
+                            <span class="upload-text">双击上传头部宣传图</span>
+                            <input type="file" id="upload-header" style="display:none" multiple>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 产品网格 -->
+                <div class="product-grid">
+                    <!-- 产品项目将通过JavaScript动态生成 -->
+                </div>
+                
+                <!-- 底部区域 - 更新提示文本 -->
+                <div class="footer-wrapper">
+                    <div class="footer-image">
+                        <img src="/api/placeholder/900/100" alt="底部宣传图" style="display: none;" id="footer-img">
+                        <div class="delete-btn" style="display: none;" onclick="deleteImage('footer-img')">×</div>
+                        <label class="upload-btn" for="upload-footer">
+                            <span class="upload-text">双击上传底部标签图</span>
+                            <input type="file" id="upload-footer" style="display:none" multiple>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 修改：右侧历史图片面板 -->
+        <div class="history-panel">
+            <div class="panel-header">
+                <div class="panel-controls">
+                    <!-- 此处的切换按钮将被隐藏，使用独立的按钮 -->
+                    <div class="toggle-history-panel">
+                        <div class="toggle-history-icon"></div>
+                    </div>
+                </div>
+                <h3>历史图片面板</h3>
+            </div>
+            
+            <!-- 新增：搜索框 -->
+            <div class="search-box">
+                <input type="text" id="history-search" placeholder="搜索图片...">
+                <span class="search-clear" id="search-clear">×</span>
+            </div>
+            
+            <div class="history-container">
+                <!-- 历史图片将通过JavaScript动态生成 -->
+                <div class="empty-history-message">尚无历史图片</div>
+            </div>
+            
+            <!-- 新增：分页导航 -->
+            <div class="pagination-container">
+                <button class="pagination-btn prev-btn" disabled>
+                    <span class="arrow">&#9664;</span>
+                </button>
+                <div class="pagination-numbers">
+                    <!-- 页码按钮将通过JavaScript动态生成 -->
+                </div>
+                <button class="pagination-btn next-btn" disabled>
+                    <span class="arrow">&#9654;</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 引入JavaScript文件 -->
+    <script src="gnfill/tupian.js"></script>
+    <script src="gnfill/shuiyin.js"></script>
+    <script src="gnfill/daohang.js"></script>
+    <!-- 历史图片面板脚本 -->
+    <script src="gnfill/lishi.js"></script>
+    <!-- 新增搜索和分页脚本 -->
+    <script src="gnfill/lishis/sousuo.js"></script>
+    <script src="gnfill/lishis/fenye.js"></script>
+    <script src="zhu.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>

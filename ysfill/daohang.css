@@ -1,0 +1,180 @@
+/* 左侧设置面板样式 */
+.settings-panel {
+    width: 250px;
+    background-color: #fff;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    overflow-y: auto;
+    overflow-x: hidden; /* 保持隐藏横向溢出 */
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    transition: transform 0.3s ease;
+    z-index: 100;
+    box-sizing: border-box;
+}
+
+/* 收起状态 - 完全隐藏 */
+.settings-panel.collapsed {
+    transform: translateX(-100%); /* 完全隐藏面板 */
+}
+
+/* 折叠/展开按钮 - 调整位置，简化样式 */
+.toggle-panel {
+    position: absolute;
+    top: 50%;
+    right: 0; /* 定位在设置面板的右边缘 */
+    width: 20px;
+    height: 50px;
+    background-color: transparent; /* 移除背景色 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 101; /* 确保在设置面板上层 */
+    transform: translateY(-50%);
+}
+
+.toggle-panel:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* 轻微的悬停效果 */
+}
+
+.toggle-panel-icon {
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+}
+
+.panel-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.panel-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #555;
+}
+
+.setting-item {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.setting-item label {
+    width: 90px;
+    font-size: 14px;
+    color: #666;
+    flex-shrink: 0;
+}
+
+/* 统一所有控件的样式和宽度 */
+.setting-item input,
+.setting-item select {
+    width: 80px; /* 统一宽度 */
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    flex: none;
+    height: 30px;
+}
+
+/* 特殊控件处理 */
+.setting-item input[type="checkbox"] {
+    width: auto;
+    height: auto;
+    margin-left: 0;
+}
+
+/* 确保颜色选择器与其他控件视觉宽度一致 */
+.setting-item input[type="color"] {
+    width: 80px;
+    padding: 2px;
+}
+
+/* 单位显示的样式 */
+.setting-item span {
+    margin-left: 5px;
+    font-size: 12px;
+    color: #666;
+    width: auto;
+    flex-shrink: 0;
+}
+
+/* 独立的折叠/展开按钮容器 - 修改位置为面板内侧 */
+.toggle-panel-container {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 101; /* 确保在设置面板上层 */
+    width: 15px;
+    height: 30px;
+    background-color: transparent; /* 设置为透明 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: left 0.3s ease;
+}
+
+/* 展开状态时，按钮位于面板内侧而非外侧 */
+.toggle-panel-container.expanded {
+    left: 230px; /* 设置面板宽度 - 按钮宽度 */
+}
+
+/* 收起状态时，按钮位于左侧边缘 */
+.toggle-panel-container.collapsed {
+    left: 0;
+}
+
+/* 下载按钮样式*/
+.download-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0 20px 0; /* 减少上边距，保持下边距 */
+    margin-top: 10px; /* 减少顶部边距 */
+    /* 移除顶部边框，因为面板section已有底部边框 */
+}
+
+.download-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.download-button:hover {
+    transform: scale(1.05);
+}
+
+.download-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 5px;
+}
+
+.download-text {
+    font-size: 14px;
+    color: #666;
+}
+
+/* 下载中样式 */
+.download-button.loading .download-icon {
+    opacity: 0.5;
+}
+
+.download-button.loading .download-text {
+    color: #999;
+}
