@@ -7,7 +7,6 @@
 }
 
 body {
-    background-color: rgba(232, 232, 232); /* 默认外部背景色 */
     color: #333;
     min-height: 100vh;
 }
