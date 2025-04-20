@@ -83,6 +83,7 @@ function applyContainerSettings() {
 }
 
 // 添加折叠面板功能 - 修改为支持完全隐藏面板
+// 添加折叠面板功能 - 使用新设计的按钮
 function setupPanelToggle() {
     console.log("开始创建折叠按钮");
     
@@ -92,15 +93,12 @@ function setupPanelToggle() {
         existingButton.remove();
     }
     
-    // 创建独立的折叠/展开按钮容器 - 简化样式
+    // 创建独立的折叠/展开按钮容器 - 使用新样式
     const toggleContainer = document.createElement('div');
     toggleContainer.className = 'toggle-panel-container expanded';
     
     const toggleIcon = document.createElement('div');
     toggleIcon.className = 'toggle-panel-icon';
-    // 初始状态为展开，显示向左的折叠箭头
-    toggleIcon.style.borderRight = '8px solid #666';
-    toggleIcon.style.borderLeft = 'none';
     
     toggleContainer.appendChild(toggleIcon);
     document.body.appendChild(toggleContainer);
@@ -115,9 +113,6 @@ function setupPanelToggle() {
     // 设置面板宽度常量
     const PANEL_WIDTH = 250;
     
-    // 设置按钮初始位置 - 在面板内侧而非外侧
-    toggleContainer.style.left = (PANEL_WIDTH - 20) + 'px';
-    
     // 添加点击事件
     toggleContainer.addEventListener('click', function(e) {
         console.log("折叠按钮被点击");
@@ -131,30 +126,18 @@ function setupPanelToggle() {
             previewContainer.classList.add('expanded');
             toggleContainer.classList.remove('expanded');
             toggleContainer.classList.add('collapsed');
-            // 修改箭头方向 - 收起状态时，箭头应指向右侧
-            toggleIcon.style.borderLeft = '8px solid #666';
-            toggleIcon.style.borderRight = 'none';
             
             // 更新预览容器边距
             previewContainer.style.marginLeft = '0';
-            
-            // 更新按钮位置到左侧边缘
-            toggleContainer.style.left = '0';
         } else {
             // 展开面板
             settingsPanel.classList.remove('collapsed');
             previewContainer.classList.remove('expanded');
             toggleContainer.classList.add('expanded');
             toggleContainer.classList.remove('collapsed');
-            // 修改箭头方向 - 展开状态时，箭头应指向左侧
-            toggleIcon.style.borderRight = '8px solid #666';
-            toggleIcon.style.borderLeft = 'none';
             
             // 恢复预览容器边距
             previewContainer.style.marginLeft = '250px';
-            
-            // 更新按钮位置 - 移到面板内侧
-            toggleContainer.style.left = (PANEL_WIDTH - 20) + 'px';
         }
     });
     

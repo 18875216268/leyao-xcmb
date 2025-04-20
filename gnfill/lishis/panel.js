@@ -4,6 +4,9 @@
  */
 
 // 设置历史面板事件
+// 设置历史面板事件
+// 设置历史面板事件
+// 设置历史面板事件
 function setupHistoryPanelEvents() {
     // 获取面板元素
     const historyPanel = document.querySelector('.history-panel');
@@ -15,82 +18,20 @@ function setupHistoryPanelEvents() {
     const previewContainer = document.querySelector('.preview-container');
     
     // 初始宽度
-    const defaultWidth = 220;
-    let currentWidth = defaultWidth;
+    // 直接获取CSS变量的值为初始宽度，而非硬编码
+    let currentWidth = parseInt(getComputedStyle(document.documentElement)
+    .getPropertyValue('--history-panel-width')) || 180;
     
     // 将默认宽度添加为CSS变量，便于按钮位置计算
     document.documentElement.style.setProperty('--panel-width', currentWidth + 'px');
     
-    // 创建独立的切换按钮容器 - 只简化样式，保持位置不变
-    const toggleContainer = document.createElement('div');
-    toggleContainer.className = 'toggle-history-container expanded';
+    // 将历史面板默认设置为折叠状态
+    historyPanel.classList.add('collapsed');
     
-    const toggleIcon = document.createElement('div');
-    toggleIcon.className = 'toggle-history-icon';
-    // 初始状态的箭头方向保持不变
-    toggleIcon.style.borderLeft = '8px solid #666';
-    toggleIcon.style.borderRight = 'none';
-    
-    toggleContainer.appendChild(toggleIcon);
-    document.body.appendChild(toggleContainer);
-    
-    // 初始设置预览容器的边距
-    previewContainer.classList.add('history-expanded');
-    previewContainer.style.marginRight = currentWidth + 'px';
-    
-    // 更新按钮位置 - 保持原有位置计算方式不变
-    function updateToggleButtonPosition(width) {
-        document.documentElement.style.setProperty('--panel-width', width + 'px');
-        
-        if (!historyPanel.classList.contains('collapsed')) {
-            // 已展开状态 - 按钮位于面板左侧边缘(内侧)
-            toggleContainer.style.right = (width - 20) + 'px';
-        } else {
-            // 已收起状态 - 按钮位于右侧边缘
-            toggleContainer.style.right = '0';
-        }
-    }
-    
-    // 切换按钮点击事件 - 保持原有行为不变
-    toggleContainer.addEventListener('click', function() {
-        const isCollapsed = !historyPanel.classList.contains('collapsed');
-        
-        if (isCollapsed) {
-            // 收起面板
-            historyPanel.classList.add('collapsed');
-            previewContainer.classList.remove('history-expanded');
-            previewContainer.classList.add('history-collapsed');
-            toggleContainer.classList.remove('expanded');
-            toggleContainer.classList.add('collapsed');
-            // 收起状态的箭头方向
-            toggleIcon.style.borderRight = '8px solid #666';
-            toggleIcon.style.borderLeft = 'none';
-            
-            // 记录当前宽度
-            currentWidth = historyPanel.offsetWidth;
-            previewContainer.style.marginRight = '0';
-            
-            // 更新按钮位置
-            updateToggleButtonPosition(currentWidth);
-        } else {
-            // 展开面板
-            historyPanel.classList.remove('collapsed');
-            previewContainer.classList.add('history-expanded');
-            previewContainer.classList.remove('history-collapsed');
-            toggleContainer.classList.add('expanded');
-            toggleContainer.classList.remove('collapsed');
-            // 展开状态的箭头方向
-            toggleIcon.style.borderLeft = '8px solid #666';
-            toggleIcon.style.borderRight = 'none';
-            
-            // 恢复之前的宽度
-            historyPanel.style.width = currentWidth + 'px';
-            previewContainer.style.marginRight = currentWidth + 'px';
-            
-            // 更新按钮位置
-            updateToggleButtonPosition(currentWidth);
-        }
-    });
+    // 调整预览容器的初始样式
+    previewContainer.classList.remove('history-expanded');
+    previewContainer.classList.add('history-collapsed');
+    previewContainer.style.marginRight = '0';
     
     // 添加左侧调整大小功能
     const resizeHandle = document.createElement('div');
@@ -117,17 +58,19 @@ function setupHistoryPanelEvents() {
     function handleResize(e) {
         if (!isResizing) return;
         
-        // 计算新宽度（从左侧减少，所以是负值）
+        // 计算新宽度
         const newWidth = startWidth - (e.clientX - startX);
         
         // 限制最小和最大宽度
-        if (newWidth >= 150 && newWidth <= 400) {
-            historyPanel.style.width = newWidth + 'px';
-            previewContainer.style.marginRight = newWidth + 'px';
+        if (newWidth >= 180 && newWidth <= 400) {
+            // 更新CSS变量，所有使用该变量的元素都会自动更新
+            document.documentElement.style.setProperty('--history-panel-width', newWidth + 'px');
             currentWidth = newWidth;
             
-            // 更新按钮位置
-            updateToggleButtonPosition(newWidth);
+            // 更新分页导航
+            if (typeof updatePagination === 'function') {
+                updatePagination();
+            }
         }
     }
     
@@ -141,13 +84,29 @@ function setupHistoryPanelEvents() {
         document.body.style.userSelect = '';
     }
     
-    // 当窗口大小改变时，更新切换按钮位置
-    window.addEventListener('resize', function() {
-        updateToggleButtonPosition(currentWidth);
+    // 监听来自新增展开按钮的展开事件
+    document.addEventListener('expandHistoryPanel', function() {
+        if (historyPanel.classList.contains('collapsed')) {
+            // 展开面板
+            historyPanel.classList.remove('collapsed');
+            previewContainer.classList.add('history-expanded');
+            previewContainer.classList.remove('history-collapsed');
+            
+            // 恢复之前的宽度
+            historyPanel.style.width = currentWidth + 'px';
+            previewContainer.style.marginRight = currentWidth + 'px';
+        }
     });
     
-    // 初始化按钮位置
-    updateToggleButtonPosition(currentWidth);
+    // 当窗口大小改变时，更新CSS变量
+    window.addEventListener('resize', function() {
+        document.documentElement.style.setProperty('--panel-width', historyPanel.offsetWidth + 'px');
+        
+        // 更新分页
+        if (typeof updatePagination === 'function') {
+            updatePagination();
+        }
+    });
 }
 
 // 依次填充到选中区域
@@ -180,16 +139,22 @@ function fillNextSelectedArea(image) {
         if (img) {
             // 设置图片
             img.src = image.data;
-            img.style.display = 'block';
+            img.style.display = "block";
             
-            // 如果是头部或底部图片，设置填满方式为cover
-            if (elementId === 'header-img' || elementId === 'footer-img') {
-                img.style.objectFit = 'cover';
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.top = '0';
-                img.style.left = '0';
-                img.style.transform = 'none';
+            // 确定显示模式
+            let displayMode = 'stretch'; // 默认显示模式
+            
+            if (elementId === 'header-img') {
+                displayMode = document.getElementById('header-display').value;
+            } else if (elementId === 'footer-img') {
+                displayMode = document.getElementById('footer-display').value;
+            } else if (elementId.startsWith('product-img-')) {
+                displayMode = document.getElementById('product-display').value;
+            }
+            
+            // 应用显示模式
+            if (typeof applyDisplayMode === 'function') {
+                applyDisplayMode(elementId, displayMode);
             }
             
             // 隐藏上传按钮
@@ -222,6 +187,7 @@ function fillNextSelectedArea(image) {
     currentFillIndex++;
     
     // 如果已经填充完所有选中区域，重置索引
+    // fillNextSelectedArea 函数的剩余部分:
     if (currentFillIndex >= selectedElements.length) {
         currentFillIndex = 0;
     }

@@ -1,20 +1,22 @@
-/* 历史图片面板样式 - lishi.css */
+:root {
+    --history-panel-width: 180px; /* 设置默认宽度为180px */
+}
 
 /* 右侧历史图片面板基础样式 */
 .history-panel {
-    width: 220px; /* 默认宽度 */
-    min-width: 150px;
+    width: var(--history-panel-width);
+    min-width: 180px;
     max-width: 400px;
-    background-color: #fff;
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-    padding: 0;
-    overflow: hidden;
     height: 100vh;
     position: fixed;
     right: 0;
     top: 0;
-    transition: transform 0.3s ease, width 0.3s ease;
     z-index: 100;
+    background-color: #fff;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    padding: 0;
+    overflow: hidden;
+    transition: transform 0.3s ease, width 0.3s ease;
     display: flex;
     flex-direction: column;
 }
@@ -24,22 +26,21 @@
     transform: translateX(100%);
 }
 
-/* 面板头部样式 - 减小高度 */
+/* 面板头部样式 */
 .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 15px; /* 减小上下内边距 */
+    height: 36px;
+    padding: 0px 6px;
     border-bottom: 1px solid #eee;
     background-color: #f8f8f8;
-    height: 36px; /* 明确设置高度 */
 }
 
 .panel-header h3 {
-    font-size: 14px; /* 缩小字体 */
+    font-size: 14px;
     margin: 0;
     color: #555;
-    /* 标题现在放在右侧 */
     order: 2;
 }
 
@@ -47,7 +48,6 @@
 .panel-controls {
     display: flex;
     align-items: center;
-    /* 控制区现在放在左侧 */
     order: 1;
 }
 
@@ -66,63 +66,6 @@
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-/* 折叠/展开按钮 - 独立于面板，调整垂直位置居中于顶部面板 */
-.toggle-history-container {
-    position: fixed;
-    top: 18px; /* 36px面板高度的一半 */
-    transform: translateY(-50%); /* 垂直居中 */
-    z-index: 101; /* 确保在面板上层 */
-    width: 20px;
-    height: 36px;
-    background-color: transparent; /* 设置为透明 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: right 0.3s ease;
-}
-
-.toggle-history-container:hover {
-    background-color: rgba(0, 0, 0, 0.05); /* 轻微的悬停效果 */
-}
-
-.toggle-history-icon {
-    width: 0;
-    height: 0;
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
-    opacity: 0.8; /* 稍微降低不透明度 */
-}
-
-/* 展开状态时，按钮靠近面板左边界(在右侧) */
-.toggle-history-container.expanded {
-    right: calc(var(--panel-width, 220px) - 20px); /* 默认面板宽度减去按钮宽度 */
-    border-radius: 4px 0 0 4px;
-}
-
-/* 修正：展开状态时，箭头指向右侧 */
-.toggle-history-container.expanded .toggle-history-icon {
-    border-left: 8px solid #666;
-    border-right: none;
-}
-
-/* 折叠状态时，按钮在面板原位置左侧(在左侧) */
-.toggle-history-container.collapsed {
-    right: 0;
-    border-radius: 4px 0 0 4px;
-}
-
-/* 修正：折叠状态时，箭头指向左侧 */
-.toggle-history-container.collapsed .toggle-history-icon {
-    border-right: 8px solid #666;
-    border-left: none;
-}
-
-/* 原来面板内的切换按钮隐藏 */
-.panel-controls .toggle-history-panel {
-    display: none;
-}
-
 /* 历史图片容器 */
 .history-container {
     flex: 1;
@@ -139,6 +82,7 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
     cursor: pointer;
+    background-color: white; /* 添加白色背景 */
 }
 
 .history-item:hover {
@@ -146,10 +90,11 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* 缩略图容器样式 */
 .history-thumbnail {
     width: 100%;
     height: 0;
-    padding-bottom: 75%; /* 4:3 比例 */
+    padding-bottom: 75%;
     position: relative;
     background-color: #f5f5f5;
 }
@@ -163,50 +108,79 @@
     object-fit: contain;
 }
 
-.history-item-name {
-    padding: 5px 8px;
-    font-size: 12px;
-    background-color: rgba(255, 255, 255, 0.9);
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+/* 历史图片项目头部时间显示 */
+.history-item-time {
+    padding: 3px 8px;
+    font-size: 10.5px;
+    background-color: #f8f8f8;
+    width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #666;
+    border-bottom: 1px solid #eee;
+    box-sizing: border-box;
 }
 
-/* 历史项目操作按钮 */
-.history-item-actions {
+.history-item-name {
+    padding: 3px 8px;
+    font-size: 10.5px;
+    background-color: #f8f8f8;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #333;
+    border-top: 1px solid #eee;
+    box-sizing: border-box;
+}
+
+/* 修改历史项目头部时间显示区域 - 确保有足够空间容纳删除按钮 */
+.history-item-time {
+    padding: 3px 8px;
+    font-size: 10.5px;
+    background-color: #f8f8f8;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #666;
+    border-bottom: 1px solid #eee;
+    box-sizing: border-box;
+    position: relative; /* 添加相对定位 */
+}
+
+/* 历史项目删除按钮样式 */
+.history-action-btn.history-action-delete {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    display: flex;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.history-item:hover .history-item-actions {
-    opacity: 1;
-}
-
-.history-action-btn {
-    width: 18px;
-    height: 18px;
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
+    top: 50%; /* 将top设置为50% */
+    transform: translateY(-50%); /* 使用transform向上偏移自身高度的50%，实现垂直居中 */
+    right: 4px;
+    width: auto;
+    height: auto;
+    background-color: transparent;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 4px;
-    font-size: 12px;
+    margin-left: 0;
+    font-size: 14px;
     cursor: pointer;
-    color: #666;
+    color: #666; /* 灰色 */
+    opacity: 0; /* 默认隐藏 */
+    transition: opacity 0.2s;
 }
 
-.history-action-btn:hover {
-    background-color: #fff;
-    color: #333;
+/* 历史项目悬停时显示删除按钮 */
+.history-item:hover .history-action-btn.history-action-delete {
+    opacity: 1;
+}
+
+/* 历史项目操作按钮的新容器样式 */
+.history-item-actions {
+    position: static;
+    display: block;
+    opacity: 1;
 }
 
 /* 空历史提示 */
@@ -218,16 +192,12 @@
 }
 
 /* 调整预览容器位置以适应历史面板 */
-.preview-container {
-    transition: margin 0.3s ease;
-}
-
 .preview-container.history-expanded {
-    margin-right: 220px;
+    margin-right: calc(var(--history-panel-width) + 30px) !important; /* 增加额外30px空间 */
 }
 
 .preview-container.history-collapsed {
-    margin-right: 0;
+    margin-right: 0 !important;
 }
 
 /* 使用图片对话框样式 */

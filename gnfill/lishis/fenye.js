@@ -9,6 +9,7 @@ let currentPage = 1; // 当前页码
 let totalPages = 1; // 总页数
 
 // 初始化分页功能
+// 初始化分页功能
 function initPaginationFeature() {
     // 获取分页相关元素
     const prevBtn = document.querySelector('.prev-btn');
@@ -32,6 +33,22 @@ function initPaginationFeature() {
         if (currentPage < totalPages) {
             goToPage(currentPage + 1);
         }
+    });
+    
+    // 添加面板宽度变化监听
+    const historyPanel = document.querySelector('.history-panel');
+    if (historyPanel) {
+        // 使用ResizeObserver监听面板尺寸变化
+        const resizeObserver = new ResizeObserver(entries => {
+            // 当面板宽度变化时更新分页
+            updatePagination();
+        });
+        resizeObserver.observe(historyPanel);
+    }
+    
+    // 监听窗口大小变化，可能间接影响面板尺寸
+    window.addEventListener('resize', function() {
+        updatePagination();
     });
     
     // 初始化分页
@@ -77,6 +94,7 @@ function updatePaginationButtons() {
 }
 
 // 更新页码显示
+// 修改后
 function updatePageNumbers() {
     const paginationNumbers = document.querySelector('.pagination-numbers');
     if (!paginationNumbers) return;
@@ -84,20 +102,22 @@ function updatePageNumbers() {
     // 清空现有页码
     paginationNumbers.innerHTML = '';
     
-    // 确定要显示的页码范围（最多显示3个页码）
-    let startPage = Math.max(1, currentPage - 1);
-    let endPage = Math.min(totalPages, startPage + 2);
+    // 根据历史面板宽度计算可显示的页码数量
+    const historyPanel = document.querySelector('.history-panel');
+    const panelWidth = historyPanel ? historyPanel.offsetWidth : 180;
     
-    // 如果总页数小于3，则直接显示全部页码
-    if (totalPages <= 3) {
-        startPage = 1;
-        endPage = totalPages;
-    } else {
-        // 如果当前页接近末尾，调整显示范围
-        if (currentPage >= totalPages - 1) {
-            startPage = Math.max(1, totalPages - 2);
-            endPage = totalPages;
-        }
+    // 每个页码按钮宽度约30px(包含margin)，计算可以显示多少个
+    // 留出一定空间给前后导航按钮
+    const availableWidth = panelWidth - 90; // 减去前后导航按钮和一些边距
+    const maxButtons = Math.max(3, Math.floor(availableWidth / 30)); // 至少显示3个按钮
+    
+    // 根据可显示数量确定页码范围
+    let startPage = Math.max(1, currentPage - Math.floor((maxButtons - 1) / 2));
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+    
+    // 调整起始页以充分利用可用按钮数量
+    if (endPage - startPage + 1 < maxButtons && startPage > 1) {
+        startPage = Math.max(1, endPage - maxButtons + 1);
     }
     
     // 生成页码按钮

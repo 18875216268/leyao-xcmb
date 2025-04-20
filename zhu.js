@@ -2,7 +2,6 @@
  * zhu.js - 主JS文件
  * 负责加载模块和初始化应用
  */
-
 // 初始化函数 - 加载所有模块并设置默认参数
 document.addEventListener('DOMContentLoaded', function() {
     // 1. 初始化产品网格
@@ -24,6 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     applyContainerSettings();
     applyProductSettings();
     applyGlobalSettings();
+    
+    // 新增: 应用图片显示模式
+    if (typeof applyImageDisplayMode === 'function') {
+        applyImageDisplayMode();
+    }
     
     // 5. 先延迟一点应用水印设置，确保值被正确应用
     setTimeout(applyWatermarkSettings, 100);
@@ -49,7 +53,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 10. 初始化下载按钮
     initDownloadButton();
+    
+    // 11. 初始化展开/折叠按钮
+    initToggleButton();
+
+    // 12. 初始化重置设置按钮
+    initResetSettingsButton();
+
+    // 添加键盘删除监听
+    if (typeof setupKeyboardDeleteListener === 'function') {
+        setupKeyboardDeleteListener();
+    }
 });
+
+
 
 // 初始化头部和底部区域的选择和上传功能
 function setupHeaderFooterSelection() {
@@ -126,23 +143,49 @@ function applyGlobalSettings() {
     // 设置内部背景色
     const container = document.querySelector('.container');
     container.style.backgroundColor = interiorBgColor;
+    
+    // 设置外部背景色 (保留此功能以确保兼容性)
+    document.body.style.backgroundColor = exteriorBgColor;
 }
 
 // 设置自动应用监听器
 function setupAutoApplyListeners() {
-    // 整体框架设置自动应用
+    // 主布局设置自动应用
     document.getElementById('container-width').addEventListener('input', applyContainerSettings);
-    document.getElementById('header-height').addEventListener('input', applyContainerSettings);
-    document.getElementById('footer-height').addEventListener('input', applyContainerSettings);
-
-    // 产品设置自动应用
-    document.getElementById('product-columns').addEventListener('change', applyProductSettings);
-    document.getElementById('product-gap').addEventListener('input', applyProductSettings);
-    document.getElementById('product-count').addEventListener('input', applyProductSettings);
-    
-    // 背景颜色设置自动应用
-    document.getElementById('exterior-background').addEventListener('input', applyGlobalSettings);
     document.getElementById('interior-background').addEventListener('input', applyGlobalSettings);
+    document.getElementById('product-count').addEventListener('input', applyProductSettings);
+    document.getElementById('product-gap').addEventListener('input', applyProductSettings);
+    document.getElementById('product-columns').addEventListener('change', applyProductSettings);
+    document.getElementById('exterior-background').addEventListener('input', applyGlobalSettings);
+
+    // 顶部宣传图设置自动应用
+    document.getElementById('header-height').addEventListener('input', applyContainerSettings);
+    if(document.getElementById('header-display')) {
+        document.getElementById('header-display').addEventListener('change', applyImageDisplayMode);
+    }
+
+    // 底部标签图设置自动应用
+    document.getElementById('footer-height').addEventListener('input', applyContainerSettings);
+    if(document.getElementById('footer-display')) {
+        document.getElementById('footer-display').addEventListener('change', applyImageDisplayMode);
+    }
+
+    // 商品陈列图设置自动应用
+    if(document.getElementById('product-display')) {
+        document.getElementById('product-display').addEventListener('change', applyImageDisplayMode);
+    }
+    if(document.getElementById('product-width')) {
+        document.getElementById('product-width').addEventListener('input', function() {
+            // 修改为重新初始化产品网格
+            reinitProductGrid();
+        });
+    }
+    if(document.getElementById('product-height')) {
+        document.getElementById('product-height').addEventListener('input', function() {
+            // 修改为重新初始化产品网格
+            reinitProductGrid();
+        });
+    }
     
     // 水印设置自动应用
     document.getElementById('watermark-enabled').addEventListener('change', applyWatermarkSettings);
@@ -302,7 +345,7 @@ function loadImageWithFallback(imgPath, targetId, imageName) {
 function initDownloadButton() {
     // 创建下载按钮
     const downloadButton = document.createElement('div');
-    downloadButton.className = 'fixed-download-button';
+    downloadButton.className = 'fixed-action-button fixed-download-button';
     
     // 检查历史面板状态，设置初始位置类
     const historyPanel = document.querySelector('.history-panel');
@@ -319,30 +362,108 @@ function initDownloadButton() {
     // 添加到页面
     document.body.appendChild(downloadButton);
     
-    // 监听历史面板状态变化
-    listenToHistoryPanelChanges(downloadButton);
+    return downloadButton;
+}
+
+// 初始化展开/折叠按钮
+// 初始化展开/折叠按钮
+function initToggleButton() {
+    // 创建展开/折叠按钮
+    const toggleButton = document.createElement('div');
+    toggleButton.className = 'fixed-action-button fixed-toggle-button';
+    
+    // 检查历史面板状态，设置初始位置类和图标
+    const historyPanel = document.querySelector('.history-panel');
+    const isCollapsed = true;
+    
+    // 确保按钮位置正确 - 折叠状态下不添加with-panel类
+    if (historyPanel && !isCollapsed) {
+        toggleButton.classList.add('with-panel');
+    }
+    
+    // 添加初始图标
+    updateToggleButtonIcon(toggleButton, isCollapsed);
+    
+    // 添加点击事件
+    toggleButton.addEventListener('click', function() {
+        toggleHistoryPanel(this);
+    });
+    
+    // 添加到页面
+    document.body.appendChild(toggleButton);
+    
+    // 监听原有折叠按钮的事件
+    document.addEventListener('historyPanelToggled', function(event) {
+        const isCollapsed = event.detail.collapsed;
+        updateToggleButtonIcon(toggleButton, isCollapsed);
+        
+        if (isCollapsed) {
+            toggleButton.classList.remove('with-panel');
+            document.querySelector('.fixed-download-button').classList.remove('with-panel');
+        } else {
+            toggleButton.classList.add('with-panel');
+            document.querySelector('.fixed-download-button').classList.add('with-panel');
+        }
+    });
+    
+    return toggleButton;
+}
+
+// 更新展开/折叠按钮图标
+function updateToggleButtonIcon(button, isCollapsed) {
+    if (!button) return;
+    
+    button.innerHTML = isCollapsed ? 
+        `<img src="img/展开.png" alt="展开历史面板">` : 
+        `<img src="img/折叠.png" alt="折叠历史面板">`;
+}
+
+// 切换历史面板状态
+function toggleHistoryPanel(button) {
+    const historyPanel = document.querySelector('.history-panel');
+    const previewContainer = document.querySelector('.preview-container');
+    const downloadButton = document.querySelector('.fixed-download-button');
+    
+    if (!historyPanel || !previewContainer) return;
+    
+    const isCollapsed = !historyPanel.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+        // 收起面板
+        historyPanel.classList.add('collapsed');
+        previewContainer.classList.remove('history-expanded');
+        previewContainer.classList.add('history-collapsed');
+        
+        // 更新按钮样式
+        if (downloadButton) {
+            downloadButton.classList.remove('with-panel');
+        }
+        button.classList.remove('with-panel');
+    } else {
+        // 展开面板
+        historyPanel.classList.remove('collapsed');
+        previewContainer.classList.add('history-expanded');
+        previewContainer.classList.remove('history-collapsed');
+        
+        // 不需要手动设置margin-right，因为.history-expanded类会自动应用CSS变量
+        
+        // 更新按钮样式
+        if (downloadButton) {
+            downloadButton.classList.add('with-panel');
+        }
+        button.classList.add('with-panel');
+        
+        // 触发扩展面板事件
+        const event = new CustomEvent('expandHistoryPanel');
+        document.dispatchEvent(event);
+    }
+    
+    // 更新图标
+    updateToggleButtonIcon(button, isCollapsed);
 }
 
 // 监听历史面板状态变化
 function listenToHistoryPanelChanges(downloadButton) {
-    // 监听切换按钮点击
-    const toggleContainer = document.querySelector('.toggle-history-container');
-    if (toggleContainer) {
-        toggleContainer.addEventListener('click', function() {
-            // 延迟执行以确保面板状态已更新
-            setTimeout(() => {
-                const historyPanel = document.querySelector('.history-panel');
-                if (historyPanel) {
-                    if (historyPanel.classList.contains('collapsed')) {
-                        downloadButton.classList.remove('with-panel');
-                    } else {
-                        downloadButton.classList.add('with-panel');
-                    }
-                }
-            }, 50);
-        });
-    }
-    
     // 监听面板宽度变化
     const resizeObserver = new ResizeObserver(entries => {
         for (let entry of entries) {
@@ -430,6 +551,146 @@ function loadHtml2Canvas() {
         document.head.appendChild(script);
     });
 }
+
+/**
+ * 用户信息面板功能代码
+ * 可以添加到zhu.js末尾
+ */
+
+// 初始化用户信息面板
+function initUserPanel() {
+    // 获取用户信息元素
+    const userGreeting = document.getElementById('userGreeting');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    if (!userGreeting || !logoutBtn) {
+        console.error('未找到用户信息面板元素');
+        return;
+    }
+    
+    // 检查登录信息 - 从localStorage获取
+    const userInfoStr = localStorage.getItem('userInfo');
+    if (!userInfoStr) {
+        console.error('未找到登录信息');
+        userGreeting.textContent = '您好，访客';
+        return;
+    }
+    
+    try {
+        // 解析用户信息
+        const userInfo = JSON.parse(userInfoStr);
+        
+        // 显示用户名
+        if (userInfo && userInfo.username) {
+            userGreeting.textContent = `您好，${userInfo.username}`;
+        } else {
+            userGreeting.textContent = '您好，用户';
+        }
+        
+        // 设置退出登录按钮功能
+        logoutBtn.addEventListener('click', function() {
+            // 清除localStorage中的登录信息
+            localStorage.removeItem('userInfo');
+            
+            // 显示退出提示
+            if (typeof showNotification === 'function') {
+                showNotification('已退出登录，即将跳转到登录页面...', 2000);
+            }
+            
+            // 延迟跳转到登录页，给用户一些时间看到提示
+            setTimeout(function() {
+                window.location.href = 'index.html';
+            }, 1500);
+        });
+    } catch (error) {
+        console.error('解析用户信息失败:', error);
+        userGreeting.textContent = '您好，用户';
+    }
+}
+
+// 在页面加载完成后初始化用户面板
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加到现有的DOMContentLoaded事件处理中
+    // 或者作为单独的监听器运行
+    setTimeout(initUserPanel, 100); // 略微延迟确保DOM已完全加载
+});
+
+/**
+ * 重置布局设置功能
+ * 将所有设置重置为默认值
+ */
+function initResetSettingsButton() {
+    // 获取重置按钮
+    const resetButton = document.getElementById('resetSettingsBtn');
+    
+    if (!resetButton) {
+        console.error('未找到重置按钮元素');
+        return;
+    }
+    
+    // 添加点击事件监听
+    resetButton.addEventListener('click', function() {
+        resetLayoutSettings();
+    });
+}
+
+// 重置布局设置为默认值
+function resetLayoutSettings() {
+    // 定义默认设置值
+    const defaultSettings = {
+        'container-width': 900,
+        'header-height': 380,
+        'footer-height': 155,
+        'exterior-background': '#D6D6D6',
+        'interior-background': '#3F56DC',
+        'product-count': 8,
+        'product-gap': 20,
+        'product-columns': 3,
+        'product-width': 645,
+        'product-height': 980,
+        'header-display': 'fill',
+        'footer-display': 'fill',
+        'product-display': 'original'
+    };
+    
+    // 遍历并应用默认设置
+    for (const [id, value] of Object.entries(defaultSettings)) {
+        const element = document.getElementById(id);
+        if (element) {
+            if (element.type === 'color') {
+                element.value = value;
+            } else if (element.tagName === 'SELECT') {
+                for (let i = 0; i < element.options.length; i++) {
+                    if (element.options[i].value === value) {
+                        element.selectedIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                element.value = value;
+            }
+        }
+    }
+    
+    // 应用更改到UI
+    applyContainerSettings();
+    applyProductSettings();
+    applyGlobalSettings();
+    
+    // 如果存在图片显示模式函数，则应用它
+    if (typeof applyImageDisplayMode === 'function') {
+        applyImageDisplayMode();
+    }
+    
+    // 应用水印设置
+    setTimeout(applyWatermarkSettings, 100);
+}
+
+// 页面加载完成后初始化重置按钮
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加到现有的DOMContentLoaded事件处理中
+    setTimeout(initResetSettingsButton, 300); // 略微延迟确保DOM已完全加载
+});
 
 // 导出为全局函数
 window.showNotification = showNotification;

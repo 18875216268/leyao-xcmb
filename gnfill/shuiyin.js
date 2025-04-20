@@ -168,3 +168,4 @@ function applyWatermarkSettings() {
         setTimeout(() => adjustWatermarkWidth(input), 10);
     });
 }
+

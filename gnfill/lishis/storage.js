@@ -69,13 +69,25 @@ function cleanupOldImages() {
 }
 
 // 添加图片到本地存储
-function addImageToStorage(imageData, fileName) {
-    // 创建一个新的图片对象
+async function addImageToStorage(imageData, fileName) {
+    // 尝试识别价格
+    let price = null;
+    try {
+        // 使用OCRModule识别价格
+        if (window.OCRModule) {
+            price = await window.OCRModule.recognizePrice(imageData);
+        }
+    } catch (e) {
+        console.error('价格识别过程出错:', e);
+    }
+    
+    // 创建一个新的图片对象，加入价格信息
     const newImage = {
         id: imageStorage.nextId++,
         data: imageData,
         name: fileName || `图片 ${imageStorage.images.length + 1}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        price: price // 添加价格字段
     };
     
     // 添加到存储数组
@@ -129,6 +141,8 @@ function loadHistoryImages() {
 }
 
 // 将图片添加到历史面板
+// 将图片添加到历史面板
+// 将图片添加到历史面板
 function addImageToHistoryPanel(image) {
     const historyContainer = document.querySelector('.history-container');
     if (!historyContainer) return;
@@ -158,15 +172,34 @@ function addImageToHistoryPanel(image) {
         }
     }
     
+    // 格式化时间显示
+    let timeDisplay = '';
+    if (image.timestamp) {
+        const date = new Date(image.timestamp);
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        timeDisplay = `${year}/${month}/${day} ${hours}:${minutes}`;
+    }
+    
+    // 添加价格信息到名称中
+    let nameWithPrice = displayName;
+    if (image.price) {
+        nameWithPrice = `${displayName}【￥${image.price}】`;
+    }
+    
     // 设置HTML内容
     historyItem.innerHTML = `
+        <div class="history-item-time">
+            ${timeDisplay}
+            <div class="history-action-btn history-action-delete" title="从历史中删除">×</div>
+        </div>
         <div class="history-thumbnail">
             <img src="${image.data}" alt="${image.name}">
         </div>
-        <div class="history-item-name">${displayName}</div>
-        <div class="history-item-actions">
-            <div class="history-action-btn history-action-delete" title="从历史中删除">×</div>
-        </div>
+        <div class="history-item-name">${nameWithPrice}</div>
     `;
     
     // 添加到容器的顶部
@@ -191,10 +224,12 @@ function addImageToHistoryPanel(image) {
     
     // 删除按钮 - 不再显示确认提示
     const deleteBtn = historyItem.querySelector('.history-action-delete');
-    deleteBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        removeImageFromStorage(image.id, false); // 传递false表示不显示确认提示
-    });
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            removeImageFromStorage(image.id, false); // 传递false表示不显示确认提示
+        });
+    }
     
     // 应用当前搜索过滤条件（如果有）
     if (typeof currentSearchTerm !== 'undefined' && currentSearchTerm) {
@@ -202,6 +237,24 @@ function addImageToHistoryPanel(image) {
         if (!imageName.includes(currentSearchTerm.toLowerCase())) {
             historyItem.dataset.filtered = 'true';
         }
+    }
+    
+    // 添加预览功能(如果存在)
+    if (typeof YuLan !== 'undefined' && YuLan && typeof YuLan.addButton === 'function') {
+        const thumbnail = historyItem.querySelector('.history-thumbnail');
+        if (thumbnail) {
+            const img = thumbnail.querySelector('img');
+            if (img) {
+                YuLan.addButton(thumbnail, img.src);
+            }
+        }
+    } else if (typeof PreviewModule !== 'undefined' && PreviewModule) {
+        // 刷新预览功能
+        setTimeout(function() {
+            if (typeof PreviewModule.refresh === 'function') {
+                PreviewModule.refresh();
+            }
+        }, 100);
     }
 }
 

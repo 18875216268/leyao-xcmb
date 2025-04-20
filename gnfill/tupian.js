@@ -15,9 +15,12 @@ function initProductGrid() {
     const columns = parseInt(document.getElementById('product-columns').value) || 3;
     const productCount = parseInt(document.getElementById('product-count').value) || 9;
     
-    // 默认的产品图片尺寸 (固定比例)
-    const productWidth = 645;  // 固定宽度参考值
-    const productHeight = 980; // 固定高度参考值
+    // 获取设置面板中的宽度和高度值
+    const productWidth = parseInt(document.getElementById('product-width').value) || 645;
+    const productHeight = parseInt(document.getElementById('product-height').value) || 980;
+    
+    // 计算高宽比并应用于产品图片
+    const aspectRatio = (productHeight / productWidth) * 100;
     
     // 设置网格列数
     gridContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
@@ -27,7 +30,7 @@ function initProductGrid() {
         const productItem = document.createElement('div');
         productItem.className = 'product-item';
         productItem.innerHTML = `
-            <div class="product-image" data-id="product-img-${i}">
+            <div class="product-image" data-id="product-img-${i}" style="padding-bottom: ${aspectRatio}%">
                 <img src="/api/placeholder/${productWidth}/${productHeight}" alt="" style="display: none;" id="product-img-${i}">
                 <div class="delete-btn" style="display: none;" onclick="deleteImage('product-img-${i}')">×</div>
                 <label class="upload-btn" for="upload-${i}">
@@ -67,6 +70,9 @@ function initProductGrid() {
             handleImageSelection(this, e);
         });
     }
+
+    // 添加键盘删除监听
+    setupKeyboardDeleteListener();
     
     // 添加全局点击事件，清除选择
     document.addEventListener('click', function(e) {
@@ -170,6 +176,7 @@ function deleteImage(imgId) {
         if (imgId === 'header-img' || imgId === 'footer-img') {
             // 恢复默认样式
             img.style.objectFit = "";
+            img.style.objectPosition = "";
             img.style.width = "";
             img.style.height = "";
             img.style.top = "";
@@ -188,5 +195,273 @@ function deleteImage(imgId) {
         if (uploadBtn) {
             uploadBtn.style.display = 'flex';
         }
+        
+        // 查找对应的父容器，如果存在水印元素，也将其重置
+        const containerSelector = imgId === 'header-img' ? '.header-image' : 
+                                 imgId === 'footer-img' ? '.footer-image' : 
+                                 `.product-image[data-id="${imgId}"]`;
+        
+        const container = document.querySelector(containerSelector);
+        if (container) {
+            // 移除选择状态
+            container.classList.remove('selected');
+            
+            // 重置水印（仅产品图片有水印）
+            if (imgId.startsWith('product-img-')) {
+                const watermarkInput = container.querySelector('.watermark-input');
+                if (watermarkInput) {
+                    // 恢复默认水印文本
+                    watermarkInput.value = '折后价：￥999';
+                    // 更新保存的水印文本
+                    const dataIndex = watermarkInput.getAttribute('data-index');
+                    if (dataIndex && typeof watermarkTexts !== 'undefined') {
+                        watermarkTexts[dataIndex] = watermarkInput.value;
+                    }
+                }
+            }
+        }
     }
 }
+
+// 新增：应用图片显示模式
+function applyImageDisplayMode() {
+    // 应用头部图片显示模式
+    applyDisplayMode('header-img', document.getElementById('header-display').value);
+    
+    // 应用底部图片显示模式
+    applyDisplayMode('footer-img', document.getElementById('footer-display').value);
+    
+    // 应用产品图片显示模式
+    const productMode = document.getElementById('product-display').value;
+    document.querySelectorAll('[id^="product-img-"]').forEach(img => {
+        if (img.style.display !== 'none') {
+            applyDisplayMode(img.id, productMode);
+        }
+    });
+}
+
+// 为特定图片应用显示模式
+function applyDisplayMode(imgId, mode) {
+    const img = document.getElementById(imgId);
+    if (!img || img.style.display === 'none' || !img.src) return;
+    
+    // 重置所有相关样式
+    img.style.objectFit = "";
+    img.style.objectPosition = "";
+    img.style.width = "";
+    img.style.height = "";
+    img.style.position = "absolute";
+    img.style.top = "0";
+    img.style.left = "0";
+    img.style.transform = "";
+    
+    // 根据模式应用不同样式
+    switch (mode) {
+        case 'original': // 原图模式
+            img.style.width = "auto";
+            img.style.height = "auto";
+            img.style.maxWidth = "100%";
+            img.style.maxHeight = "100%";
+            img.style.position = "absolute";
+            img.style.top = "50%";
+            img.style.left = "50%";
+            img.style.transform = "translate(-50%, -50%)";
+            break;
+            
+        case 'stretch': // 拉伸模式
+            img.style.width = "100%";
+            img.style.height = "100%";
+            img.style.objectFit = "fill";
+            break;
+            
+        case 'fill': // 填充模式
+            img.style.width = "100%";
+            img.style.height = "100%";
+            img.style.objectFit = "cover";
+            break;
+            
+        default:
+            // 默认使用拉伸模式
+            img.style.width = "100%";
+            img.style.height = "100%";
+            img.style.objectFit = "fill";
+    }
+}
+
+// 修改现有的handleFileUpload函数，上传图片后应用显示模式
+window.handleFileUpload = function(event) {
+    const input = event.target;
+    const files = input.files;
+    
+    // 如果没有文件被选择，直接返回
+    if (!files || files.length === 0) return;
+    
+    let imgId;
+    let displayMode = 'stretch'; // 默认显示模式
+    
+    if (input.id === 'upload-header') {
+        imgId = 'header-img';
+        displayMode = document.getElementById('header-display').value;
+    } else if (input.id === 'upload-footer') {
+        imgId = 'footer-img';
+        displayMode = document.getElementById('footer-display').value;
+    } else {
+        imgId = input.id.replace('upload-', 'product-img-');
+        displayMode = document.getElementById('product-display').value;
+    }
+    
+    // 处理第一个文件
+    const file = files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        // 获取图片数据URL
+        const imageDataUrl = e.target.result;
+        
+        // 保存到本地存储
+        if (typeof addImageToStorage === 'function') {
+            addImageToStorage(imageDataUrl, file.name);
+        }
+        
+        // 找到对应的图片元素
+        const img = document.getElementById(imgId);
+        
+        if (img) {
+            img.src = imageDataUrl;
+            img.style.display = "block";
+            
+            // 应用选择的显示模式
+            applyDisplayMode(imgId, displayMode);
+            
+            // 隐藏上传按钮
+            const uploadBtn = input.parentElement;
+            uploadBtn.style.display = "none";
+            
+            // 显示删除按钮
+            const deleteBtn = img.nextElementSibling;
+            if (deleteBtn && deleteBtn.classList.contains('delete-btn')) {
+                deleteBtn.style.display = "block";
+            }
+        }
+    };
+    
+    reader.readAsDataURL(file);
+    
+    // 如果选择了多个文件，尝试填充其他空白区域
+    if (files.length > 1) {
+        // 查找当前空白图片位置
+        const emptySlots = getEmptyImageSlots();
+        
+        // 跳过第一个文件（已经处理）并处理剩余的
+        const remainingFiles = Math.min(files.length - 1, emptySlots.length);
+        
+        for (let i = 0; i < remainingFiles; i++) {
+            const file = files[i + 1]; // +1 跳过第一个文件
+            const slot = emptySlots[i];
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // 保存到本地存储
+                const imageDataUrl = e.target.result;
+                if (typeof addImageToStorage === 'function') {
+                    addImageToStorage(imageDataUrl, file.name);
+                }
+                
+                const img = document.getElementById(slot.imgId);
+                if (img) {
+                    img.src = imageDataUrl;
+                    img.style.display = "block";
+                    
+                    // 应用选择的显示模式
+                    applyDisplayMode(slot.imgId, displayMode);
+                    
+                    // 隐藏上传按钮
+                    const uploadBtn = slot.uploadBtn;
+                    uploadBtn.style.display = "none";
+                    
+                    // 显示删除按钮
+                    const deleteBtn = img.nextElementSibling;
+                    if (deleteBtn && deleteBtn.classList.contains('delete-btn')) {
+                        deleteBtn.style.display = "block";
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+};
+
+/**
+ * 键盘删除功能 - 监听键盘事件，删除选中的图片
+ */
+function setupKeyboardDeleteListener() {
+    // 添加全局键盘事件监听
+    document.addEventListener('keydown', function(e) {
+        // 仅当按下Delete键时处理
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            // 检查是否有选中的图片区域
+            if (selectedImages.size > 0) {
+                // 防止在输入框中按Delete键时删除图片
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                
+                e.preventDefault(); // 阻止默认行为
+                
+                // 删除所有选中的图片
+                deleteSelectedImages();
+            }
+        }
+    });
+}
+
+/**
+ * 删除所有选中的图片
+ */
+function deleteSelectedImages() {
+    // 创建一个数组存储选中的图片ID，避免在迭代过程中修改selectedImages集合
+    const imagesToDelete = [...selectedImages];
+    
+    // 删除计数
+    let deletedCount = 0;
+    
+    // 逐个删除图片
+    imagesToDelete.forEach(imageId => {
+        // 获取图片ID
+        let imgId;
+        if (imageId === 'header-img' || imageId === 'footer-img') {
+            imgId = imageId;
+        } else if (imageId.includes('product-img-')) {
+            imgId = imageId;
+        } else {
+            // 处理data-id格式
+            const element = document.querySelector(`[data-id="${imageId}"]`);
+            if (element) {
+                imgId = element.dataset.id;
+            }
+        }
+        
+        // 调用删除函数
+        if (imgId) {
+            deleteImage(imgId);
+            deletedCount++;
+        }
+        
+        // 从选中集合中移除
+        selectedImages.delete(imageId);
+    });
+    
+    // 清除所有选择状态
+    clearAllSelections();
+    
+    // 显示通知
+    if (deletedCount > 0) {
+        if (typeof showNotification === 'function') {
+            showNotification(`已删除${deletedCount}张图片`, 2000);
+        }
+    }
+}
+
+// 导出函数
+window.applyImageDisplayMode = applyImageDisplayMode;
+window.applyDisplayMode = applyDisplayMode;
