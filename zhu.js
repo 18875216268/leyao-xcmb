@@ -638,19 +638,19 @@ function initResetSettingsButton() {
 function resetLayoutSettings() {
     // 定义默认设置值
     const defaultSettings = {
-        'container-width': 900,
-        'header-height': 380,
-        'footer-height': 155,
-        'exterior-background': '#D6D6D6',
-        'interior-background': '#3F56DC',
-        'product-count': 8,
-        'product-gap': 20,
-        'product-columns': 3,
-        'product-width': 645,
-        'product-height': 980,
-        'header-display': 'fill',
-        'footer-display': 'fill',
-        'product-display': 'original'
+        'container-width': 900,        // 容器宽度：900px
+        'header-height': 380,          // 顶部图片高度：380px
+        'footer-height': 155,          // 底部图片高度：155px
+        'exterior-background': '#D6D6D6', // 外部背景色：浅灰色
+        'interior-background': '#3F56DC', // 内部背景色：蓝色
+        'product-count': 8,            // 产品数量：8个
+        'product-gap': 20,             // 产品间距：20px
+        'product-columns': 3,          // 产品列数：3列
+        'product-width': 645,          // 产品宽度：645px
+        'product-height': 980,         // 产品高度：980px
+        'header-display': 'stretch',      // 顶部图片显示模式：拉伸
+        'footer-display': 'stretch',      // 底部图片显示模式：拉伸
+        'product-display': 'stretch'  // 产品图片显示模式：拉伸
     };
     
     // 遍历并应用默认设置
