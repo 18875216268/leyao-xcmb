@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录/注册</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .container {
+            width: 380px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 40px 30px;
+        }
+        .title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #3367d6;
+        }
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+            font-size: 14px;
+        }
+        .error {
+            color: #e53935;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .loading span {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: #4285f4;
+            border-radius: 50%;
+            margin: 0 3px;
+            animation: loading 1.4s infinite ease-in-out both;
+        }
+        .loading span:nth-child(1) { animation-delay: -0.32s; }
+        .loading span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes loading {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">登录/注册</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" required>
+                <div class="error" id="usernameError">请输入有效的用户名</div>
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" required>
+                <div class="error" id="passwordError">密码长度至少6位</div>
+            </div>
+            <button type="submit" class="btn" id="loginBtn">登录 / 注册</button>
+            <div class="loading" id="loading"><span></span><span></span><span></span></div>
+            <div class="message" id="message"></div>
+        </form>
+    </div>
+
+    <!-- 登录验证接口 -->
+    <script type="module" src="auth.js"></script>
+</body>
+</html>

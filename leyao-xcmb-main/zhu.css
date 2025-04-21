@@ -1,0 +1,412 @@
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+
+body {
+    color: #333;
+    min-height: 100vh;
+}
+
+/* 页面布局 */
+.page-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* 图片区域基础样式 */
+.product-image,
+.header-image,
+.footer-image {
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+/* 图片占位区域样式 */
+.upload-btn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    color: #aaaaaa;
+    opacity: 1;
+    cursor: default;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    border: 1px solid #e0e0e0;
+}
+
+/* 上传图标 */
+.upload-icon {
+    font-size: 48px;
+    font-weight: normal;
+    margin-bottom: 10px;
+    line-height: 1;
+}
+
+/* 上传文字 */
+.upload-text {
+    margin-top: 0;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    padding: 0 15px;
+}
+
+/* 悬停和选中状态的蒙版效果 */
+.product-image:hover::after,
+.header-image:hover::after,
+.footer-image:hover::after,
+.product-image.selected::after,
+.header-image.selected::after,
+.footer-image.selected::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* 悬停和选中状态下的上传按钮样式 */
+.product-image:hover .upload-btn,
+.header-image:hover .upload-btn,
+.footer-image:hover .upload-btn,
+.product-image.selected .upload-btn,
+.header-image.selected .upload-btn,
+.footer-image.selected .upload-btn {
+    background-color: transparent;
+    color: #ffffff;
+    z-index: 6;
+}
+
+/* 删除按钮样式 */
+.delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 24px;
+    height: 24px;
+    background-color: transparent;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.product-image:hover .delete-btn,
+.header-image:hover .delete-btn,
+.footer-image:hover .delete-btn {
+    opacity: 1;
+    z-index: 6;
+}
+
+/* 水印层级确保在蒙版之上 */
+.watermark {
+    z-index: 10;
+}
+
+/* 图片位于蒙版之下 */
+.product-image img,
+.header-image img,
+.footer-image img {
+    z-index: 1;
+}
+
+/* 通知样式 */
+.notification-container {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.notification {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    max-width: 300px;
+    text-align: center;
+    font-size: 14px;
+    margin: 5px 0;
+    opacity: 0;
+    position: relative;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.7s ease;
+}
+
+/* 公共按钮基础样式 右下角按钮*/
+.fixed-action-button {
+    position: fixed;
+    right: 10px;
+    background-color: #3F56DC;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 99;
+    transition: right 0.3s ease, transform 0.2s ease;
+}
+
+.fixed-action-button:hover {
+    transform: scale(1.05);
+}
+
+.fixed-action-button.with-panel {
+    right: calc(var(--history-panel-width) + 10px); /* 使用同一个变量设置默认值 */
+}
+
+.fixed-action-button img {
+    width: 16px;
+    height: 16px;
+}
+
+/* 下载按钮特定样式 */
+.fixed-download-button {
+    bottom: 10px;
+}
+
+.fixed-download-button.loading {
+    background-color: #999;
+}
+
+.fixed-download-button.loading img {
+    opacity: 0.7;
+}
+
+/* 展开/折叠按钮特定样式 */
+.fixed-toggle-button {
+    bottom: 44px; /* 下载按钮的位置(10px) + 下载按钮的高度(30px) + 间距(4px) */
+}
+
+/* OCR按钮特定样式 */
+.fixed-ocr-button {
+    bottom: 77px; /* 位于下载按钮(10px)和折叠按钮(44px)之间 */
+    z-index: 100; /* 确保在最上层 */
+}
+
+.fixed-ocr-button.processing {
+    background-color: #999;
+}
+
+.fixed-ocr-button.processing img {
+    opacity: 0.7;
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* OCR处理中的容器样式 */
+.product-image.ocr-processing {
+    opacity: 0.8;
+    position: relative;
+}
+
+.product-image.ocr-processing::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 20;
+    pointer-events: none;
+}
+
+/* 正在识别状态的水印样式 */
+.product-image.ocr-processing .watermark-input {
+    background: rgba(255, 255, 255, 0.7) !important;
+    color: #333 !important;
+    border-color: #666 !important;
+    font-style: italic !important;
+}
+
+/* 响应式布局调整 */
+@media (max-width: 1200px) {
+    .preview-container {
+        padding: 10px;
+    }
+    
+    .container {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        flex-direction: column;
+    }
+    
+    .settings-panel {
+        width: 100%;
+        height: auto;
+        position: static;
+        margin-bottom: 20px;
+    }
+    
+    .preview-container {
+        margin-left: 0;
+    }
+}
+
+/* 
+ * 设置面板顶部用户信息栏样式
+ * 和历史图片面板顶部样式统一
+ */
+
+/* 修改设置面板为flex布局 */
+.settings-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important; /* 移除原来的内边距 */
+    overflow: hidden !important; /* 防止整个面板滚动 */
+}
+
+/* 顶部用户信息栏样式 - 与历史面板顶部保持一致 */
+.settings-user-header {
+    flex-shrink: 0; /* 不缩小 */
+    display: flex;
+    justify-content: flex-start; /* 左对齐 */
+    align-items: center;
+    height: 50px;
+    padding: 0 6px;
+    background-color: #F5F5F6; /* 与历史面板顶部背景一致 */
+    border-bottom: 0.25px solid #cbcbcb;
+    z-index: 10;
+}
+
+/* 用户信息容器 */
+.user-info-container {
+    display: flex;
+    align-items: center;
+}
+
+/* 用户名称样式 */
+.user-greeting {
+    font-size: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+    color: #515151; /* 与历史面板标题颜色一致 */
+    margin-left: 4px; /* 在退出图标右侧10px处开始展示 */
+}
+
+/* 退出按钮样式 */
+.logout-icon {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border: none;
+    padding: 0;
+    background-color: #ffffff00;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+.logout-icon:hover {
+    opacity: 1;
+}
+
+/* 设置面板内容区域 */
+.settings-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 15px;
+}
+
+/* 设置滚动条样式（与原有滚动条保持一致） */
+.settings-content.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+.settings-content.custom-scrollbar::-webkit-scrollbar {
+    width: 2px;
+    height: 2px;
+}
+
+.settings-content.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+}
+
+.settings-content.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    border: none;
+}
+
+.settings-content.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* 设置面板底部按钮区域 - 与顶部用户信息栏保持一致的样式 */
+.settings-bottom-footer {
+    flex-shrink: 0; /* 不缩小 */
+    display: flex;
+    justify-content: center; /* 居中对齐 */
+    align-items: center;
+    height: 60px;
+    padding: 0 6px;
+    background-color: #F5F5F6; /* 与用户信息顶部背景一致 */
+    border-top: 0.5px solid #cacaca;
+    z-index: 10;
+}
+
+/* 重置按钮样式 */
+.reset-settings-btn {
+    display: inline-block;
+    padding: 8px 12px;
+    background-color: #3F56DC;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.reset-settings-btn:hover {
+    background-color: #2A3E9C;
+}
