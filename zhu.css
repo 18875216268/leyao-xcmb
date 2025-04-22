@@ -207,7 +207,53 @@ body {
 
 /* 展开/折叠按钮特定样式 */
 .fixed-toggle-button {
-    bottom: 44px; /* 下载按钮的位置(10px) + 下载按钮的高度(40px) + 间距(10px) */
+    bottom: 44px; /* 下载按钮的位置(10px) + 下载按钮的高度(30px) + 间距(4px) */
+}
+
+/* OCR按钮特定样式 */
+.fixed-ocr-button {
+    bottom: 77px; /* 位于下载按钮(10px)和折叠按钮(44px)之间 */
+    z-index: 100; /* 确保在最上层 */
+}
+
+.fixed-ocr-button.processing {
+    background-color: #999;
+}
+
+.fixed-ocr-button.processing img {
+    opacity: 0.7;
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* OCR处理中的容器样式 */
+.product-image.ocr-processing {
+    opacity: 0.8;
+    position: relative;
+}
+
+.product-image.ocr-processing::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 20;
+    pointer-events: none;
+}
+
+/* 正在识别状态的水印样式 */
+.product-image.ocr-processing .watermark-input {
+    background: rgba(255, 255, 255, 0.7) !important;
+    color: #333 !important;
+    border-color: #666 !important;
+    font-style: italic !important;
 }
 
 /* 响应式布局调整 */
