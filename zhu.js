@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 12. 初始化重置设置按钮
     initResetSettingsButton();
+    
+    // 13. 初始化OCR识别按钮
+    initOCRButton();
 
     // 添加键盘删除监听
     if (typeof setupKeyboardDeleteListener === 'function') {
@@ -299,6 +302,19 @@ function loadImageWithFallback(imgPath, targetId, imageName) {
         img.src = imgPath;
         img.style.display = 'block';
         
+        // 应用当前设置的显示模式
+        let displayMode = 'stretch'; // 默认显示模式
+        if (targetId === 'header-img') {
+            displayMode = document.getElementById('header-display').value;
+        } else if (targetId === 'footer-img') {
+            displayMode = document.getElementById('footer-display').value;
+        }
+        
+        // 应用显示模式
+        if (typeof applyDisplayMode === 'function') {
+            applyDisplayMode(targetId, displayMode);
+        }
+        
         // 隐藏上传按钮
         const imgContainer = img.closest('.header-image, .footer-image');
         if (imgContainer) {
@@ -365,6 +381,52 @@ function initDownloadButton() {
     return downloadButton;
 }
 
+// 初始化OCR按钮
+function initOCRButton() {
+    // 创建OCR按钮
+    const ocrButton = document.createElement('div');
+    ocrButton.className = 'fixed-action-button fixed-ocr-button';
+    
+    // 检查历史面板状态，设置初始位置类
+    const historyPanel = document.querySelector('.history-panel');
+    if (historyPanel && !historyPanel.classList.contains('collapsed')) {
+        ocrButton.classList.add('with-panel');
+    }
+    
+    // 添加图标
+    ocrButton.innerHTML = `<img src="img/识别.png" alt="OCR识别">`;
+    
+    // 添加点击事件 - 调用OCR模块的识别函数
+    ocrButton.addEventListener('click', function() {
+        if (typeof window.OCRModule !== 'undefined' && typeof window.OCRModule.recognizeAllProductImages === 'function') {
+            window.OCRModule.recognizeAllProductImages();
+        } else {
+            console.error('OCR模块未加载或识别函数不可用');
+            if (typeof showNotification === 'function') {
+                showNotification('OCR识别功能暂不可用', 2000);
+            }
+        }
+    });
+    
+    // 添加到页面
+    document.body.appendChild(ocrButton);
+    
+    // 监听历史面板状态变化
+    document.addEventListener('historyPanelToggled', function(event) {
+        const isCollapsed = event.detail.collapsed;
+        
+        if (isCollapsed) {
+            ocrButton.classList.remove('with-panel');
+        } else {
+            ocrButton.classList.add('with-panel');
+        }
+    });
+    
+    console.log('OCR按钮已创建:', ocrButton); // 添加调试日志
+    
+    return ocrButton;
+}
+
 // 初始化展开/折叠按钮
 // 初始化展开/折叠按钮
 function initToggleButton() {
@@ -384,7 +446,7 @@ function initToggleButton() {
     // 添加初始图标
     updateToggleButtonIcon(toggleButton, isCollapsed);
     
-    // 添加点击事件
+// 添加点击事件
     toggleButton.addEventListener('click', function() {
         toggleHistoryPanel(this);
     });
@@ -400,9 +462,21 @@ function initToggleButton() {
         if (isCollapsed) {
             toggleButton.classList.remove('with-panel');
             document.querySelector('.fixed-download-button').classList.remove('with-panel');
+            
+            // 同时更新OCR按钮
+            const ocrButton = document.querySelector('.fixed-ocr-button');
+            if (ocrButton) {
+                ocrButton.classList.remove('with-panel');
+            }
         } else {
             toggleButton.classList.add('with-panel');
             document.querySelector('.fixed-download-button').classList.add('with-panel');
+            
+            // 同时更新OCR按钮
+            const ocrButton = document.querySelector('.fixed-ocr-button');
+            if (ocrButton) {
+                ocrButton.classList.add('with-panel');
+            }
         }
     });
     
@@ -423,6 +497,7 @@ function toggleHistoryPanel(button) {
     const historyPanel = document.querySelector('.history-panel');
     const previewContainer = document.querySelector('.preview-container');
     const downloadButton = document.querySelector('.fixed-download-button');
+    const ocrButton = document.querySelector('.fixed-ocr-button'); // 新增OCR按钮引用
     
     if (!historyPanel || !previewContainer) return;
     
@@ -438,6 +513,9 @@ function toggleHistoryPanel(button) {
         if (downloadButton) {
             downloadButton.classList.remove('with-panel');
         }
+        if (ocrButton) { // 新增OCR按钮处理
+            ocrButton.classList.remove('with-panel');
+        }
         button.classList.remove('with-panel');
     } else {
         // 展开面板
@@ -450,6 +528,9 @@ function toggleHistoryPanel(button) {
         // 更新按钮样式
         if (downloadButton) {
             downloadButton.classList.add('with-panel');
+        }
+        if (ocrButton) { // 新增OCR按钮处理
+            ocrButton.classList.add('with-panel');
         }
         button.classList.add('with-panel');
         
