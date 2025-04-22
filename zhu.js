@@ -447,330 +447,330 @@ function initToggleButton() {
     updateToggleButtonIcon(toggleButton, isCollapsed);
     
 // 添加点击事件
-    toggleButton.addEventListener('click', function() {
-        toggleHistoryPanel(this);
-    });
+toggleButton.addEventListener('click', function() {
+    toggleHistoryPanel(this);
+});
+
+// 添加到页面
+document.body.appendChild(toggleButton);
+
+// 监听原有折叠按钮的事件
+document.addEventListener('historyPanelToggled', function(event) {
+    const isCollapsed = event.detail.collapsed;
+    updateToggleButtonIcon(toggleButton, isCollapsed);
     
-    // 添加到页面
-    document.body.appendChild(toggleButton);
-    
-    // 监听原有折叠按钮的事件
-    document.addEventListener('historyPanelToggled', function(event) {
-        const isCollapsed = event.detail.collapsed;
-        updateToggleButtonIcon(toggleButton, isCollapsed);
+    if (isCollapsed) {
+        toggleButton.classList.remove('with-panel');
+        document.querySelector('.fixed-download-button').classList.remove('with-panel');
         
-        if (isCollapsed) {
-            toggleButton.classList.remove('with-panel');
-            document.querySelector('.fixed-download-button').classList.remove('with-panel');
-            
-            // 同时更新OCR按钮
-            const ocrButton = document.querySelector('.fixed-ocr-button');
-            if (ocrButton) {
-                ocrButton.classList.remove('with-panel');
-            }
-        } else {
-            toggleButton.classList.add('with-panel');
-            document.querySelector('.fixed-download-button').classList.add('with-panel');
-            
-            // 同时更新OCR按钮
-            const ocrButton = document.querySelector('.fixed-ocr-button');
-            if (ocrButton) {
-                ocrButton.classList.add('with-panel');
-            }
+        // 同时更新OCR按钮
+        const ocrButton = document.querySelector('.fixed-ocr-button');
+        if (ocrButton) {
+            ocrButton.classList.remove('with-panel');
         }
-    });
-    
-    return toggleButton;
+    } else {
+        toggleButton.classList.add('with-panel');
+        document.querySelector('.fixed-download-button').classList.add('with-panel');
+        
+        // 同时更新OCR按钮
+        const ocrButton = document.querySelector('.fixed-ocr-button');
+        if (ocrButton) {
+            ocrButton.classList.add('with-panel');
+        }
+    }
+});
+
+return toggleButton;
 }
 
 // 更新展开/折叠按钮图标
 function updateToggleButtonIcon(button, isCollapsed) {
-    if (!button) return;
-    
-    button.innerHTML = isCollapsed ? 
-        `<img src="img/展开.png" alt="展开历史面板">` : 
-        `<img src="img/折叠.png" alt="折叠历史面板">`;
+if (!button) return;
+
+button.innerHTML = isCollapsed ? 
+    `<img src="img/展开.png" alt="展开历史面板">` : 
+    `<img src="img/折叠.png" alt="折叠历史面板">`;
 }
 
 // 切换历史面板状态
 function toggleHistoryPanel(button) {
-    const historyPanel = document.querySelector('.history-panel');
-    const previewContainer = document.querySelector('.preview-container');
-    const downloadButton = document.querySelector('.fixed-download-button');
-    const ocrButton = document.querySelector('.fixed-ocr-button'); // 新增OCR按钮引用
+const historyPanel = document.querySelector('.history-panel');
+const previewContainer = document.querySelector('.preview-container');
+const downloadButton = document.querySelector('.fixed-download-button');
+const ocrButton = document.querySelector('.fixed-ocr-button'); // 新增OCR按钮引用
+
+if (!historyPanel || !previewContainer) return;
+
+const isCollapsed = !historyPanel.classList.contains('collapsed');
+
+if (isCollapsed) {
+    // 收起面板
+    historyPanel.classList.add('collapsed');
+    previewContainer.classList.remove('history-expanded');
+    previewContainer.classList.add('history-collapsed');
     
-    if (!historyPanel || !previewContainer) return;
-    
-    const isCollapsed = !historyPanel.classList.contains('collapsed');
-    
-    if (isCollapsed) {
-        // 收起面板
-        historyPanel.classList.add('collapsed');
-        previewContainer.classList.remove('history-expanded');
-        previewContainer.classList.add('history-collapsed');
-        
-        // 更新按钮样式
-        if (downloadButton) {
-            downloadButton.classList.remove('with-panel');
-        }
-        if (ocrButton) { // 新增OCR按钮处理
-            ocrButton.classList.remove('with-panel');
-        }
-        button.classList.remove('with-panel');
-    } else {
-        // 展开面板
-        historyPanel.classList.remove('collapsed');
-        previewContainer.classList.add('history-expanded');
-        previewContainer.classList.remove('history-collapsed');
-        
-        // 不需要手动设置margin-right，因为.history-expanded类会自动应用CSS变量
-        
-        // 更新按钮样式
-        if (downloadButton) {
-            downloadButton.classList.add('with-panel');
-        }
-        if (ocrButton) { // 新增OCR按钮处理
-            ocrButton.classList.add('with-panel');
-        }
-        button.classList.add('with-panel');
-        
-        // 触发扩展面板事件
-        const event = new CustomEvent('expandHistoryPanel');
-        document.dispatchEvent(event);
+    // 更新按钮样式
+    if (downloadButton) {
+        downloadButton.classList.remove('with-panel');
     }
+    if (ocrButton) { // 新增OCR按钮处理
+        ocrButton.classList.remove('with-panel');
+    }
+    button.classList.remove('with-panel');
+} else {
+    // 展开面板
+    historyPanel.classList.remove('collapsed');
+    previewContainer.classList.add('history-expanded');
+    previewContainer.classList.remove('history-collapsed');
     
-    // 更新图标
-    updateToggleButtonIcon(button, isCollapsed);
+    // 不需要手动设置margin-right，因为.history-expanded类会自动应用CSS变量
+    
+    // 更新按钮样式
+    if (downloadButton) {
+        downloadButton.classList.add('with-panel');
+    }
+    if (ocrButton) { // 新增OCR按钮处理
+        ocrButton.classList.add('with-panel');
+    }
+    button.classList.add('with-panel');
+    
+    // 触发扩展面板事件
+    const event = new CustomEvent('expandHistoryPanel');
+    document.dispatchEvent(event);
+}
+
+// 更新图标
+updateToggleButtonIcon(button, isCollapsed);
 }
 
 // 监听历史面板状态变化
 function listenToHistoryPanelChanges(downloadButton) {
-    // 监听面板宽度变化
-    const resizeObserver = new ResizeObserver(entries => {
-        for (let entry of entries) {
-            // 更新CSS变量，按钮位置会自动跟随
-            const width = entry.contentRect.width;
-            document.documentElement.style.setProperty('--panel-width', width + 'px');
-        }
-    });
-    
-    const historyPanel = document.querySelector('.history-panel');
-    if (historyPanel) {
-        resizeObserver.observe(historyPanel);
+// 监听面板宽度变化
+const resizeObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+        // 更新CSS变量，按钮位置会自动跟随
+        const width = entry.contentRect.width;
+        document.documentElement.style.setProperty('--panel-width', width + 'px');
     }
+});
+
+const historyPanel = document.querySelector('.history-panel');
+if (historyPanel) {
+    resizeObserver.observe(historyPanel);
+}
 }
 
 // 下载框架为图片
 async function downloadFrameAsImage() {
-    // 获取下载按钮
-    const downloadButton = document.querySelector('.fixed-download-button');
-    if (!downloadButton) return;
+// 获取下载按钮
+const downloadButton = document.querySelector('.fixed-download-button');
+if (!downloadButton) return;
+
+// 设置为加载状态
+const originalHTML = downloadButton.innerHTML;
+downloadButton.classList.add('loading');
+
+try {
+    // 确保html2canvas已加载
+    await loadHtml2Canvas();
     
-    // 设置为加载状态
-    const originalHTML = downloadButton.innerHTML;
-    downloadButton.classList.add('loading');
-    
-    try {
-        // 确保html2canvas已加载
-        await loadHtml2Canvas();
-        
-        // 获取要截图的容器
-        const container = document.querySelector('.container');
-        if (!container) {
-            throw new Error('找不到容器元素');
-        }
-        
-        // 使用html2canvas将容器转换为canvas
-        showNotification('正在生成图片，请稍等...', 3000);
-        
-        const canvas = await html2canvas(container, {
-            useCORS: true,           // 支持跨域图片
-            allowTaint: true,        // 允许污染画布
-            scrollX: 0,              // 不包含水平滚动
-            scrollY: 0,              // 不包含垂直滚动
-            scale: 2,                // 增加截图清晰度
-            backgroundColor: null,   // 透明背景
-            logging: false           // 关闭日志
-        });
-        
-        // 将canvas转换为图片URL
-        const imgData = canvas.toDataURL('image/png');
-        
-        // 创建下载链接并触发点击
-        const downloadLink = document.createElement('a');
-        downloadLink.href = imgData;
-        downloadLink.download = '宣传海报_' + new Date().toLocaleString().replace(/[\/\s:]/g, '-') + '.png';
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        
-        showNotification('图片已下载！', 2000);
-    } catch (error) {
-        console.error('下载图片失败:', error);
-        showNotification('下载失败，请重试', 2000);
-    } finally {
-        // 恢复按钮状态
-        downloadButton.innerHTML = originalHTML;
-        downloadButton.classList.remove('loading');
+    // 获取要截图的容器
+    const container = document.querySelector('.container');
+    if (!container) {
+        throw new Error('找不到容器元素');
     }
+    
+    // 使用html2canvas将容器转换为canvas
+    showNotification('正在生成图片，请稍等...', 3000);
+    
+    const canvas = await html2canvas(container, {
+        useCORS: true,           // 支持跨域图片
+        allowTaint: true,        // 允许污染画布
+        scrollX: 0,              // 不包含水平滚动
+        scrollY: 0,              // 不包含垂直滚动
+        scale: 2,                // 增加截图清晰度
+        backgroundColor: null,   // 透明背景
+        logging: false           // 关闭日志
+    });
+    
+    // 将canvas转换为图片URL
+    const imgData = canvas.toDataURL('image/png');
+    
+    // 创建下载链接并触发点击
+    const downloadLink = document.createElement('a');
+    downloadLink.href = imgData;
+    downloadLink.download = '宣传海报_' + new Date().toLocaleString().replace(/[\/\s:]/g, '-') + '.png';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    
+    showNotification('图片已下载！', 2000);
+} catch (error) {
+    console.error('下载图片失败:', error);
+    showNotification('下载失败，请重试', 2000);
+} finally {
+    // 恢复按钮状态
+    downloadButton.innerHTML = originalHTML;
+    downloadButton.classList.remove('loading');
+}
 }
 
 // 添加html2canvas库
 function loadHtml2Canvas() {
-    return new Promise((resolve, reject) => {
-        // 检查是否已加载
-        if (window.html2canvas) {
-            resolve();
-            return;
-        }
-        
-        // 加载脚本
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('无法加载html2canvas库'));
-        document.head.appendChild(script);
-    });
+return new Promise((resolve, reject) => {
+    // 检查是否已加载
+    if (window.html2canvas) {
+        resolve();
+        return;
+    }
+    
+    // 加载脚本
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('无法加载html2canvas库'));
+    document.head.appendChild(script);
+});
 }
 
 /**
- * 用户信息面板功能代码
- * 可以添加到zhu.js末尾
- */
+* 用户信息面板功能代码
+* 可以添加到zhu.js末尾
+*/
 
 // 初始化用户信息面板
 function initUserPanel() {
-    // 获取用户信息元素
-    const userGreeting = document.getElementById('userGreeting');
-    const logoutBtn = document.getElementById('logoutBtn');
+// 获取用户信息元素
+const userGreeting = document.getElementById('userGreeting');
+const logoutBtn = document.getElementById('logoutBtn');
+
+if (!userGreeting || !logoutBtn) {
+    console.error('未找到用户信息面板元素');
+    return;
+}
+
+// 检查登录信息 - 从localStorage获取
+const userInfoStr = localStorage.getItem('userInfo');
+if (!userInfoStr) {
+    console.error('未找到登录信息');
+    userGreeting.textContent = '您好，访客';
+    return;
+}
+
+try {
+    // 解析用户信息
+    const userInfo = JSON.parse(userInfoStr);
     
-    if (!userGreeting || !logoutBtn) {
-        console.error('未找到用户信息面板元素');
-        return;
-    }
-    
-    // 检查登录信息 - 从localStorage获取
-    const userInfoStr = localStorage.getItem('userInfo');
-    if (!userInfoStr) {
-        console.error('未找到登录信息');
-        userGreeting.textContent = '您好，访客';
-        return;
-    }
-    
-    try {
-        // 解析用户信息
-        const userInfo = JSON.parse(userInfoStr);
-        
-        // 显示用户名
-        if (userInfo && userInfo.username) {
-            userGreeting.textContent = `您好，${userInfo.username}`;
-        } else {
-            userGreeting.textContent = '您好，用户';
-        }
-        
-        // 设置退出登录按钮功能
-        logoutBtn.addEventListener('click', function() {
-            // 清除localStorage中的登录信息
-            localStorage.removeItem('userInfo');
-            
-            // 显示退出提示
-            if (typeof showNotification === 'function') {
-                showNotification('已退出登录，即将跳转到登录页面...', 2000);
-            }
-            
-            // 延迟跳转到登录页，给用户一些时间看到提示
-            setTimeout(function() {
-                window.location.href = 'index.html';
-            }, 1500);
-        });
-    } catch (error) {
-        console.error('解析用户信息失败:', error);
+    // 显示用户名
+    if (userInfo && userInfo.username) {
+        userGreeting.textContent = `您好，${userInfo.username}`;
+    } else {
         userGreeting.textContent = '您好，用户';
     }
+    
+    // 设置退出登录按钮功能
+    logoutBtn.addEventListener('click', function() {
+        // 清除localStorage中的登录信息
+        localStorage.removeItem('userInfo');
+        
+        // 显示退出提示
+        if (typeof showNotification === 'function') {
+            showNotification('已退出登录，即将跳转到登录页面...', 2000);
+        }
+        
+        // 延迟跳转到登录页，给用户一些时间看到提示
+        setTimeout(function() {
+            window.location.href = 'index.html';
+        }, 1500);
+    });
+} catch (error) {
+    console.error('解析用户信息失败:', error);
+    userGreeting.textContent = '您好，用户';
+}
 }
 
 // 在页面加载完成后初始化用户面板
 document.addEventListener('DOMContentLoaded', function() {
-    // 添加到现有的DOMContentLoaded事件处理中
-    // 或者作为单独的监听器运行
-    setTimeout(initUserPanel, 100); // 略微延迟确保DOM已完全加载
+// 添加到现有的DOMContentLoaded事件处理中
+// 或者作为单独的监听器运行
+setTimeout(initUserPanel, 100); // 略微延迟确保DOM已完全加载
 });
 
 /**
- * 重置布局设置功能
- * 将所有设置重置为默认值
- */
+* 重置布局设置功能
+* 将所有设置重置为默认值
+*/
 function initResetSettingsButton() {
-    // 获取重置按钮
-    const resetButton = document.getElementById('resetSettingsBtn');
-    
-    if (!resetButton) {
-        console.error('未找到重置按钮元素');
-        return;
-    }
-    
-    // 添加点击事件监听
-    resetButton.addEventListener('click', function() {
-        resetLayoutSettings();
-    });
+// 获取重置按钮
+const resetButton = document.getElementById('resetSettingsBtn');
+
+if (!resetButton) {
+    console.error('未找到重置按钮元素');
+    return;
+}
+
+// 添加点击事件监听
+resetButton.addEventListener('click', function() {
+    resetLayoutSettings();
+});
 }
 
 // 重置布局设置为默认值
 function resetLayoutSettings() {
-    // 定义默认设置值
-    const defaultSettings = {
-        'container-width': 900,        // 容器宽度：900px
-        'header-height': 380,          // 顶部图片高度：380px
-        'footer-height': 155,          // 底部图片高度：155px
-        'exterior-background': '#D6D6D6', // 外部背景色：浅灰色
-        'interior-background': '#3F56DC', // 内部背景色：蓝色
-        'product-count': 8,            // 产品数量：8个
-        'product-gap': 20,             // 产品间距：20px
-        'product-columns': 3,          // 产品列数：3列
-        'product-width': 645,          // 产品宽度：645px
-        'product-height': 980,         // 产品高度：980px
-        'header-display': 'stretch',      // 顶部图片显示模式：拉伸
-        'footer-display': 'stretch',      // 底部图片显示模式：拉伸
-        'product-display': 'stretch'  // 产品图片显示模式：拉伸
-    };
-    
-    // 遍历并应用默认设置
-    for (const [id, value] of Object.entries(defaultSettings)) {
-        const element = document.getElementById(id);
-        if (element) {
-            if (element.type === 'color') {
-                element.value = value;
-            } else if (element.tagName === 'SELECT') {
-                for (let i = 0; i < element.options.length; i++) {
-                    if (element.options[i].value === value) {
-                        element.selectedIndex = i;
-                        break;
-                    }
+// 定义默认设置值
+const defaultSettings = {
+    'container-width': 900,        // 容器宽度：900px
+    'header-height': 380,          // 顶部图片高度：380px
+    'footer-height': 155,          // 底部图片高度：155px
+    'exterior-background': '#D6D6D6', // 外部背景色：浅灰色
+    'interior-background': '#3F56DC', // 内部背景色：蓝色
+    'product-count': 8,            // 产品数量：8个
+    'product-gap': 20,             // 产品间距：20px
+    'product-columns': 3,          // 产品列数：3列
+    'product-width': 645,          // 产品宽度：645px
+    'product-height': 980,         // 产品高度：980px
+    'header-display': 'stretch',      // 顶部图片显示模式：拉伸
+    'footer-display': 'stretch',      // 底部图片显示模式：拉伸
+    'product-display': 'stretch'  // 产品图片显示模式：拉伸
+};
+
+// 遍历并应用默认设置
+for (const [id, value] of Object.entries(defaultSettings)) {
+    const element = document.getElementById(id);
+    if (element) {
+        if (element.type === 'color') {
+            element.value = value;
+        } else if (element.tagName === 'SELECT') {
+            for (let i = 0; i < element.options.length; i++) {
+                if (element.options[i].value === value) {
+                    element.selectedIndex = i;
+                    break;
                 }
-            } else {
-                element.value = value;
             }
+        } else {
+            element.value = value;
         }
     }
-    
-    // 应用更改到UI
-    applyContainerSettings();
-    applyProductSettings();
-    applyGlobalSettings();
-    
-    // 如果存在图片显示模式函数，则应用它
-    if (typeof applyImageDisplayMode === 'function') {
-        applyImageDisplayMode();
-    }
-    
-    // 应用水印设置
-    setTimeout(applyWatermarkSettings, 100);
+}
+
+// 应用更改到UI
+applyContainerSettings();
+applyProductSettings();
+applyGlobalSettings();
+
+// 如果存在图片显示模式函数，则应用它
+if (typeof applyImageDisplayMode === 'function') {
+    applyImageDisplayMode();
+}
+
+// 应用水印设置
+setTimeout(applyWatermarkSettings, 100);
 }
 
 // 页面加载完成后初始化重置按钮
 document.addEventListener('DOMContentLoaded', function() {
-    // 添加到现有的DOMContentLoaded事件处理中
-    setTimeout(initResetSettingsButton, 300); // 略微延迟确保DOM已完全加载
+// 添加到现有的DOMContentLoaded事件处理中
+setTimeout(initResetSettingsButton, 300); // 略微延迟确保DOM已完全加载
 });
 
 // 导出为全局函数

@@ -8,6 +8,16 @@ const PreviewModule = (function() {
     // 私有变量和方法
     let previewModal = null;
     let previewImage = null;
+    let previewContent = null;
+    let currentScale = 1;
+    let currentRotation = 0;
+    
+    // 拖动相关变量
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let currentX = 0;
+    let currentY = 0;
     
     /**
      * 初始化预览模块
@@ -38,40 +48,206 @@ const PreviewModule = (function() {
         previewModal.className = 'preview-modal';
         
         // 创建预览内容区域
-        const content = document.createElement('div');
-        content.className = 'preview-content';
+        previewContent = document.createElement('div');
+        previewContent.className = 'preview-content';
         
         // 创建预览图片元素
         previewImage = document.createElement('img');
         previewImage.className = 'preview-image';
         previewImage.alt = '图片预览';
         
-        // 创建关闭按钮
-        const closeBtn = document.createElement('div');
-        closeBtn.className = 'preview-close-btn';
-        closeBtn.innerHTML = '×';
-        closeBtn.title = '关闭预览 (ESC)';
+        // 创建控制按钮容器
+        const controlsContainer = document.createElement('div');
+        controlsContainer.className = 'preview-controls';
+        
+        // 只保留旋转和关闭按钮，移除缩放按钮
+        
+        // 旋转按钮
+        const rotateBtn = document.createElement('button');
+        rotateBtn.className = 'preview-control-btn rotate';
+        rotateBtn.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="white" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"></path></svg>';
+        rotateBtn.title = '旋转';
+        
+        // 关闭按钮
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'preview-control-btn close';
+        closeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="white" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>';
+        closeBtn.title = '关闭';
+        
+        // 添加控制按钮点击事件
+        rotateBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            rotate();
+        });
+        
+        closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closePreview();
+        });
+        
+        // 添加图片点击事件，阻止冒泡
+        previewImage.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // 添加鼠标滚轮事件，控制缩放
+        previewContent.addEventListener('wheel', function(e) {
+            e.preventDefault(); // 阻止默认滚动行为
+            
+            if (e.deltaY < 0) {
+                // 向上滚动，放大图片
+                zoomIn(0.1); // 滚轮缩放增量更小，提供更精细的控制
+            } else {
+                // 向下滚动，缩小图片
+                zoomOut(0.1);
+            }
+        });
+        
+        // 优化拖动功能 - 使图片直接跟随鼠标移动
+        // 鼠标按下事件
+        previewImage.addEventListener('mousedown', function(e) {
+            // 取消默认的选取行为
+            e.preventDefault();
+            
+            // 开始拖动
+            isDragging = true;
+            // 记录起始位置
+            dragStartX = e.clientX - currentX;
+            dragStartY = e.clientY - currentY;
+            
+            // 更改鼠标样式为抓取状态
+            previewImage.style.cursor = 'grabbing';
+        });
+        
+        // 鼠标移动事件
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging) {
+                // 直接计算新位置 - 完全跟随鼠标
+                currentX = e.clientX - dragStartX;
+                currentY = e.clientY - dragStartY;
+                
+                // 立即更新图片位置，不添加过渡效果
+                previewImage.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale}) rotate(${currentRotation}deg)`;
+                
+                // 防止选中文本
+                e.preventDefault();
+            }
+        });
+        
+        // 鼠标释放事件
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                previewImage.style.cursor = 'grab';
+            }
+        });
+        
+        // 鼠标离开事件
+        previewImage.addEventListener('mouseleave', function() {
+            if (isDragging) {
+                isDragging = false;
+                previewImage.style.cursor = 'grab';
+            }
+        });
+        
+        // 当图片缩放时更改鼠标样式为可拖动状态
+        previewImage.addEventListener('mouseenter', function() {
+            previewImage.style.cursor = 'grab';
+        });
+        
+        // 组装控制按钮 - 仅添加旋转和关闭按钮
+        controlsContainer.appendChild(rotateBtn);
+        controlsContainer.appendChild(closeBtn);
         
         // 组装DOM结构
-        content.appendChild(previewImage);
-        content.appendChild(closeBtn);
-        previewModal.appendChild(content);
+        previewContent.appendChild(previewImage);
+        previewModal.appendChild(previewContent);
+        previewModal.appendChild(controlsContainer);
         document.body.appendChild(previewModal);
         
-        // 添加关闭事件
-        closeBtn.addEventListener('click', closePreview);
+        // 添加点击事件，阻止背景点击关闭
         previewModal.addEventListener('click', function(e) {
-            if (e.target === previewModal) {
-                closePreview();
-            }
+            e.stopPropagation();
+            // 不执行任何关闭操作，确保只能通过关闭按钮关闭
         });
         
         // 添加键盘事件
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && previewModal.classList.contains('active')) {
+            if (!previewModal.classList.contains('active')) return;
+            
+            if (e.key === 'Escape') {
                 closePreview();
+            } else if (e.key === '+' || e.key === '=') {
+                zoomIn();
+                e.preventDefault();
+            } else if (e.key === '-') {
+                zoomOut();
+                e.preventDefault();
+            } else if (e.key === 'r') {
+                rotate();
+                e.preventDefault();
             }
         });
+    }
+    
+    
+    /**
+     * 放大图片
+     * @param {number} increment - 缩放增量，默认0.2
+     */
+    function zoomIn(increment = 0.2) {
+        currentScale += increment;
+        updateImageTransform();
+        
+        // 更新鼠标样式
+        if (currentScale > 1 && previewImage) {
+            previewImage.style.cursor = 'grab';
+        }
+    }
+    
+    /**
+     * 缩小图片
+     * @param {number} decrement - 缩放减量，默认0.2
+     */
+    function zoomOut(decrement = 0.2) {
+        // 设置最小缩放比例为原始大小的1/5
+        const MIN_SCALE = 0.2;
+        
+        // 确保不会缩小到最小比例以下
+        if (currentScale > MIN_SCALE + decrement) {
+            // 正常缩小
+            currentScale -= decrement;
+            updateImageTransform();
+        } else if (currentScale > MIN_SCALE) {
+            // 如果减去decrement会低于最小值，则直接设为最小值
+            currentScale = MIN_SCALE;
+            updateImageTransform();
+        }
+        
+        // 当图片缩小到一定程度，可以考虑修改鼠标样式
+        if (currentScale <= MIN_SCALE) {
+            previewImage.style.cursor = 'default';
+        } else {
+            previewImage.style.cursor = isDragging ? 'grabbing' : 'grab';
+        }
+    }
+    
+    /**
+     * 旋转图片
+     */
+    function rotate() {
+        currentRotation = (currentRotation + 90) % 360;
+        updateImageTransform();
+    }
+    
+    /**
+     * 更新图片变换样式
+     */
+    function updateImageTransform() {
+        if (previewImage) {
+            // 直接应用变换，不添加transition属性
+            previewImage.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale}) rotate(${currentRotation}deg)`;
+        }
     }
     
     /**
@@ -172,8 +348,16 @@ const PreviewModule = (function() {
             createPreviewModal();
         }
         
+        // 重置缩放、旋转和位置
+        currentScale = 1;
+        currentRotation = 0;
+        currentX = 0;
+        currentY = 0;
+        
         // 设置图片源
         previewImage.src = imgSrc;
+        previewImage.style.transform = '';
+        previewImage.style.cursor = 'default';
         
         // 显示弹窗
         previewModal.style.display = 'flex';
@@ -200,8 +384,13 @@ const PreviewModule = (function() {
         setTimeout(() => {
             previewModal.style.display = 'none';
             
-            // 清空图片源，释放内存
+            // 清空图片源和变换，释放内存
             previewImage.src = '';
+            previewImage.style.transform = '';
+            currentScale = 1;
+            currentRotation = 0;
+            currentX = 0;
+            currentY = 0;
         }, 300);
     }
     

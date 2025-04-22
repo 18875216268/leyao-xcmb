@@ -330,8 +330,10 @@ window.handleFileUpload = function(event) {
             img.src = imageDataUrl;
             img.style.display = "block";
             
-            // 应用选择的显示模式
-            applyDisplayMode(imgId, displayMode);
+            // 应用选择的显示模式 - 统一使用 applyDisplayMode 函数
+            if (typeof applyDisplayMode === 'function') {
+                applyDisplayMode(imgId, displayMode);
+            }
             
             // 隐藏上传按钮
             const uploadBtn = input.parentElement;
@@ -372,8 +374,10 @@ window.handleFileUpload = function(event) {
                     img.src = imageDataUrl;
                     img.style.display = "block";
                     
-                    // 应用选择的显示模式
-                    applyDisplayMode(slot.imgId, displayMode);
+                    // 应用选择的显示模式 - 同样使用 applyDisplayMode
+                    if (typeof applyDisplayMode === 'function') {
+                        applyDisplayMode(slot.imgId, displayMode);
+                    }
                     
                     // 隐藏上传按钮
                     const uploadBtn = slot.uploadBtn;

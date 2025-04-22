@@ -141,16 +141,8 @@ function fillNextSelectedArea(image) {
             img.src = image.data;
             img.style.display = "block";
             
-            // 确定显示模式
-            let displayMode = 'stretch'; // 默认显示模式
-            
-            if (elementId === 'header-img') {
-                displayMode = document.getElementById('header-display').value;
-            } else if (elementId === 'footer-img') {
-                displayMode = document.getElementById('footer-display').value;
-            } else if (elementId.startsWith('product-img-')) {
-                displayMode = document.getElementById('product-display').value;
-            }
+            // 历史面板应用图片时固定使用原图/原比例显示
+            const displayMode = 'original';
             
             // 应用显示模式
             if (typeof applyDisplayMode === 'function') {
@@ -187,107 +179,7 @@ function fillNextSelectedArea(image) {
     currentFillIndex++;
     
     // 如果已经填充完所有选中区域，重置索引
-    // fillNextSelectedArea 函数的剩余部分:
     if (currentFillIndex >= selectedElements.length) {
         currentFillIndex = 0;
     }
 }
-
-// 处理图片上传，扩展原有的handleFileUpload函数以支持本地存储 
-window.handleFileUpload = function(event) {
-    const input = event.target;
-    const files = input.files;
-    
-    // 如果没有文件被选择，直接返回
-    if (!files || files.length === 0) return;
-    
-    let imgId;
-    
-    if (input.id === 'upload-header') {
-        imgId = 'header-img';
-    } else if (input.id === 'upload-footer') {
-        imgId = 'footer-img';
-    } else {
-        imgId = input.id.replace('upload-', 'product-img-');
-    }
-    
-    // 处理第一个文件
-    const file = files[0];
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-        // 获取图片数据URL
-        const imageDataUrl = e.target.result;
-        
-        // 保存到本地存储
-        addImageToStorage(imageDataUrl, file.name);
-        
-        // 找到对应的图片元素
-        const img = document.getElementById(imgId);
-        
-        if (img) {
-            img.src = imageDataUrl;
-            img.style.display = "block";
-            
-            // 针对头部和底部图片，设置填满方式为cover
-            if (imgId === 'header-img' || imgId === 'footer-img') {
-                img.style.objectFit = "cover";
-                img.style.width = "100%";
-                img.style.height = "100%";
-                img.style.top = "0";
-                img.style.left = "0";
-                img.style.transform = "none";
-            }
-            
-            // 隐藏上传按钮
-            const uploadBtn = input.parentElement;
-            uploadBtn.style.display = "none";
-            
-            // 显示删除按钮
-            const deleteBtn = img.nextElementSibling;
-            if (deleteBtn && deleteBtn.classList.contains('delete-btn')) {
-                deleteBtn.style.display = "block";
-            }
-        }
-    };
-    
-    reader.readAsDataURL(file);
-    
-    // 如果选择了多个文件，尝试填充其他空白区域
-    if (files.length > 1) {
-        // 查找当前空白图片位置
-        const emptySlots = getEmptyImageSlots();
-        
-        // 跳过第一个文件（已经处理）并处理剩余的
-        const remainingFiles = Math.min(files.length - 1, emptySlots.length);
-        
-        for (let i = 0; i < remainingFiles; i++) {
-            const file = files[i + 1]; // +1 跳过第一个文件
-            const slot = emptySlots[i];
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // 保存到本地存储
-                const imageDataUrl = e.target.result;
-                addImageToStorage(imageDataUrl, file.name);
-                
-                const img = document.getElementById(slot.imgId);
-                if (img) {
-                    img.src = imageDataUrl;
-                    img.style.display = "block";
-                    
-                    // 隐藏上传按钮
-                    const uploadBtn = slot.uploadBtn;
-                    uploadBtn.style.display = "none";
-                    
-                    // 显示删除按钮
-                    const deleteBtn = img.nextElementSibling;
-                    if (deleteBtn && deleteBtn.classList.contains('delete-btn')) {
-                        deleteBtn.style.display = "block";
-                    }
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-};

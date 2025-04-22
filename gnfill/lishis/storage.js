@@ -70,24 +70,13 @@ function cleanupOldImages() {
 
 // 添加图片到本地存储
 async function addImageToStorage(imageData, fileName) {
-    // 尝试识别价格
-    let price = null;
-    try {
-        // 使用OCRModule识别价格
-        if (window.OCRModule) {
-            price = await window.OCRModule.recognizePrice(imageData);
-        }
-    } catch (e) {
-        console.error('价格识别过程出错:', e);
-    }
-    
-    // 创建一个新的图片对象，加入价格信息
+    // 创建一个新的图片对象，移除价格信息
     const newImage = {
         id: imageStorage.nextId++,
         data: imageData,
         name: fileName || `图片 ${imageStorage.images.length + 1}`,
-        timestamp: new Date().toISOString(),
-        price: price // 添加价格字段
+        timestamp: new Date().toISOString()
+        // 移除price字段
     };
     
     // 添加到存储数组
@@ -184,11 +173,8 @@ function addImageToHistoryPanel(image) {
         timeDisplay = `${year}/${month}/${day} ${hours}:${minutes}`;
     }
     
-    // 添加价格信息到名称中
+    // 移除价格信息，直接使用displayName
     let nameWithPrice = displayName;
-    if (image.price) {
-        nameWithPrice = `${displayName}【￥${image.price}】`;
-    }
     
     // 设置HTML内容
     historyItem.innerHTML = `
