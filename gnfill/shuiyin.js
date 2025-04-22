@@ -5,6 +5,8 @@
 
 // 添加保存水印文本的全局变量
 const watermarkTexts = {}; // 用于保存每个水印输入框的文本内容
+// 默认水印文本 - 新增的全局变量
+const defaultWatermarkText = "折后价：￥999";
 
 // 添加水印元素到产品图片
 function addWatermarksToProducts() {
@@ -25,14 +27,14 @@ function addWatermarksToProducts() {
             
             // 使用保存的水印文本或默认值
             const dataIndex = `product-${index}`;
-            watermarkInput.value = watermarkTexts[dataIndex] || '折后价：￥999';
+            watermarkInput.value = watermarkTexts[dataIndex] || defaultWatermarkText;
             watermarkInput.placeholder = '双击编辑水印文字';
             watermarkInput.setAttribute('data-index', dataIndex);
             
             // 设置初始样式，确保与CSS中的默认值一致
             watermarkInput.style.color = '#ff0000';
             watermarkInput.style.fontWeight = 'bold';
-            watermarkInput.style.transform = 'translate(-50%, -50%) rotate(-25deg)';
+            watermarkInput.style.transform = 'translate(-50%, -50%) rotate(-15deg)';
             watermarkInput.style.border = '3px solid #ff0000';
             watermarkInput.style.fontSize = '16px';
             watermarkInput.style.padding = '2px 4px';
@@ -53,7 +55,7 @@ function addWatermarksToProducts() {
                 this.readOnly = true;
                 // 如果输入为空，恢复默认值
                 if (!this.value.trim()) {
-                    this.value = '折后价：￥999';
+                    this.value = defaultWatermarkText;
                 }
                 
                 // 保存水印文本到全局对象
@@ -169,3 +171,10 @@ function applyWatermarkSettings() {
     });
 }
 
+// 导出全局变量和函数
+window.watermarkTexts = watermarkTexts;
+window.defaultWatermarkText = defaultWatermarkText;
+window.adjustWatermarkWidth = adjustWatermarkWidth;
+window.saveAllWatermarkTexts = saveAllWatermarkTexts;
+window.applyWatermarkSettings = applyWatermarkSettings;
+window.addWatermarksToProducts = addWatermarksToProducts;
