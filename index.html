@@ -16,15 +16,44 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-color: #f5f7fa; /* 备用背景色 */
+            position: relative;
+            overflow: hidden;
+        }
+        .bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        .bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: -1;
         }
         .container {
             width: 380px;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 10px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
             overflow: hidden;
             padding: 40px 30px;
+            backdrop-filter: blur(5px);
+            z-index: 1;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; /* 添加定位以支持内部的绝对定位 */
+        }
+        .container:hover {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
         .title {
             text-align: center;
@@ -48,11 +77,14 @@
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
+            background-color: rgba(255, 255, 255, 0.8);
         }
         input:focus {
             outline: none;
             border-color: #4285f4;
+            background-color: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.15);
         }
         .btn {
             display: block;
@@ -65,10 +97,14 @@
             font-size: 16px;
             font-weight: 500;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background 0.3s, transform 0.2s;
         }
         .btn:hover {
             background: #3367d6;
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(0);
         }
         .message {
             text-align: center;
@@ -102,9 +138,37 @@
             0%, 80%, 100% { transform: scale(0); }
             40% { transform: scale(1); }
         }
+        .image-credit {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            z-index: 1;
+        }
+        .image-credit a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+        }
+        .image-credit a:hover {
+            text-decoration: underline;
+        }
+        /* 登录框内左下角文字样式 */
+        .promo-text {
+            position: absolute;
+            left: 30px;
+            bottom: 15px;
+            font-size: 10.5pt; /* 五号字体，约为10.5pt */
+            color: #555;
+        }
     </style>
 </head>
 <body>
+    <!-- 背景图片 -->
+    <img id="bgImage" class="bg-image" alt="背景图片">
+    <div class="bg-overlay"></div>
+    
     <div class="container">
         <h1 class="title">登录/注册</h1>
         <form id="loginForm">
@@ -122,10 +186,114 @@
             <div class="loading" id="loading"><span></span><span></span><span></span></div>
             <div class="message" id="message"></div>
         </form>
+        
+        <!-- 登录框内左下角的文字 -->
+        <div class="promo-text">简易海报设计！助力宣传......</div>
     </div>
+    
+    <div class="image-credit" id="imageCredit">
+        背景图片由 <a href="https://unsplash.com" target="_blank">Unsplash</a> 提供
+    </div>
+
+    <!-- 背景图片脚本 -->
+    <script>
+        // 精选高质量壁纸图片数组
+        const backgroundImages = [
+            {
+                url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+                credit: "Unsplash 的山川湖泊壁纸"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1511884642898-4c92249e20b6",
+                credit: "Unsplash 的星空壁纸"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1477346611705-65d1883cee1e",
+                credit: "Unsplash 的山景壁纸"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1505144808419-1957a94ca61e",
+                credit: "Unsplash 的海洋壁纸"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57",
+                credit: "Unsplash 的极光壁纸"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1507608616759-54f48f0af0ee",
+                credit: "Unsplash 的秋季壁纸"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1414609245224-afa02bfb3fda",
+                credit: "Unsplash 的日出壁纸"
+            },
+            {
+                url: "https://images.unsplash.com/photo-1487167994574-38235ff67329",
+                credit: "Unsplash 的城市壁纸"
+            }
+        ];
+        
+        // 随机加载背景图片
+        function loadRandomBackground() {
+            try {
+                // 随机选择一张图片
+                const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+                const selectedImage = backgroundImages[randomIndex];
+                
+                // 添加尺寸和质量参数以获得优化的图片
+                // 根据屏幕尺寸选择合适的图片大小
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
+                const quality = 80; // 0-100之间的图片质量
+                
+                // 构建优化的图片URL
+                const optimizedUrl = `${selectedImage.url}?ixlib=rb-1.2.1&auto=format&fit=crop&w=${screenWidth}&h=${screenHeight}&q=${quality}`;
+                
+                // 设置背景图片
+                const bgImage = document.getElementById('bgImage');
+                bgImage.src = optimizedUrl;
+                bgImage.onload = function() {
+                    this.style.opacity = '1';
+                };
+                
+                // 设置图片来源信息
+                document.getElementById('imageCredit').innerHTML = 
+                    `背景图片: ${selectedImage.credit} | 由 <a href="https://unsplash.com" target="_blank">Unsplash</a> 提供`;
+            } catch (error) {
+                console.error('加载背景时出错:', error);
+                setFallbackBackground();
+            }
+        }
+        
+        // 使用随机色彩渐变作为备用背景
+        function setFallbackBackground() {
+            const colors = [
+                'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+                'linear-gradient(to top, #a8edea 0%, #fed6e3 100%)',
+                'linear-gradient(to top, #d5d4d0 0%, #d5d4d0 1%, #eeeeec 31%, #efeeec 75%, #e9e9e7 100%)'
+            ];
+            const randomGradient = colors[Math.floor(Math.random() * colors.length)];
+            document.body.style.background = randomGradient;
+            
+            // 隐藏背景遮罩
+            document.querySelector('.bg-overlay').style.display = 'none';
+            
+            // 隐藏图片归属信息
+            document.getElementById('imageCredit').style.display = 'none';
+        }
+        
+        // 当页面加载完成时加载背景
+        document.addEventListener('DOMContentLoaded', function() {
+            // 配置备用背景，防止图片加载失败
+            setFallbackBackground();
+            
+            // 加载随机背景图片
+            loadRandomBackground();
+        });
+    </script>
 
     <!-- 登录验证接口 -->
     <script type="module" src="auth.js"></script>
-    <!-- 引入数据存储模块 -->
 </body>
 </html>
