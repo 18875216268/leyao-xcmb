@@ -36,85 +36,159 @@ window.OCRModule = (function() {
     }
     
     /**
-     * 预处理图片以优化OCR识别
-     * @param {string} imageDataUrl - 图片的Data URL
-     * @returns {Promise<string>} 处理后图片的Data URL
-     */
-    function preprocessImage(imageDataUrl) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = function() {
-                // 创建canvas
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // 只保留底部1/3区域，价格通常在底部
-                const originalWidth = img.width;
-                const originalHeight = img.height;
-                const cropHeight = Math.floor(originalHeight / 3);
-                const cropY = originalHeight - cropHeight;
-                
-                // 设置canvas尺寸
-                canvas.width = originalWidth;
-                canvas.height = cropHeight;
-                
-                // 绘制裁剪区域
-                ctx.drawImage(img, 0, cropY, originalWidth, cropHeight, 0, 0, originalWidth, cropHeight);
-                
-                // 返回处理后的图片
-                resolve(canvas.toDataURL('image/jpeg', 0.9));
-            };
+ * 改进的图像预处理函数 - 将图片分为3×2网格，只处理左下角1/6部分
+ * @param {string} imageDataUrl - 图片的Data URL
+ * @returns {Promise<string>} 处理后图片的Data URL
+ */
+function preprocessImage(imageDataUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = function() {
+            // 创建canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
             
-            img.onerror = function() {
-                reject(new Error('图片加载失败'));
-            };
+            // 获取原始尺寸
+            const originalWidth = img.width;
+            const originalHeight = img.height;
             
-            img.src = imageDataUrl;
-        });
-    }
-    
-    /**
-     * 从图片中识别文字
-     * @param {string} imageDataUrl - 图片的Data URL
-     * @returns {Promise<string>} 识别出的文字
-     */
-    async function recognizeText(imageDataUrl) {
-            // 加载Tesseract库
-            await loadTesseractLibrary();
+            // 将图片分成3×2的网格，只处理左下角1/6部分
+            // 计算左下角区域的尺寸和位置
+            const gridWidth = Math.floor(originalWidth / 3);   // 横向分为3份
+            const gridHeight = Math.floor(originalHeight / 2); // 纵向分为2份
             
-            // 预处理图片 - 只处理底部1/3区域
-            const processedImage = await preprocessImage(imageDataUrl);
+            // 左下角区域坐标
+            const cropX = 0;                             // 左侧起点
+            const cropY = originalHeight - gridHeight;   // 底部起点
             
-            // 使用Tesseract识别文字
-            const result = await Tesseract.recognize(
-                processedImage,
-                'chi_sim+eng', // 中文简体和英文
-                { 
-                    logger: m => console.log(m)
-                }
+            // 设置canvas尺寸为裁剪区域大小
+            canvas.width = gridWidth;
+            canvas.height = gridHeight;
+            
+            // 绘制左下角区域
+            ctx.drawImage(
+                img,
+                cropX, cropY, gridWidth, gridHeight,  // 源图像裁剪区域(左下角1/6)
+                0, 0, gridWidth, gridHeight           // 目标区域(填满canvas)
             );
             
-            // 提取识别的文字
-            const recognizedText = result.data.text;
-
+            // 增强图像对比度以提高OCR准确性
+            enhanceImageContrast(ctx, gridWidth, gridHeight);
             
-            return recognizedText;
+            // 返回处理后的图片
+            resolve(canvas.toDataURL('image/jpeg', 0.92));
+        };
+        
+        img.onerror = function() {
+            reject(new Error('图片加载失败'));
+        };
+        
+        img.src = imageDataUrl;
+    });
+}
+
+/**
+ * 增强图像对比度
+ * @param {CanvasRenderingContext2D} ctx - Canvas上下文
+ * @param {number} width - 图像宽度
+ * @param {number} height - 图像高度
+ */
+function enhanceImageContrast(ctx, width, height) {
+    // 获取图像数据
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    
+    // 简单的对比度增强算法
+    const contrast = 1.2;  // 对比度增强系数，1.0为原始对比度
+    const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+    
+    for (let i = 0; i < data.length; i += 4) {
+        // 增强RGB通道的对比度
+        data[i] = factor * (data[i] - 128) + 128;       // R通道
+        data[i + 1] = factor * (data[i + 1] - 128) + 128; // G通道
+        data[i + 2] = factor * (data[i + 2] - 128) + 128; // B通道
+        // Alpha通道保持不变
     }
     
-    /**
-     * 从图片中识别价格
-     * @param {string} imageDataUrl - 图片的Data URL
-     * @returns {Promise<string|null>} 识别出的价格，如果没有找到则返回null
-     */
-    async function recognizePrice(imageDataUrl) {
-            // 识别图片中的所有文字
-            const recognizedText = await recognizeText(imageDataUrl);
-            console.log('识别到的文字:', recognizedText);
-            
-            // 使用正则表达式匹配"折后约￥"或"折后价￥"或"￥"后的价格
-            const priceRegex = /(?:折后约￥|折后价￥|￥|折后价#|折后约#|#|折 后 约 #)([0-9]+(?:\.[0-9]+)?)/;
-            const match = recognizedText.match(priceRegex);
-            
+    // 将处理后的图像数据放回canvas
+    ctx.putImageData(imageData, 0, 0);
+}
+    
+/**
+ * 从图片中识别文字 - 使用改进的预处理函数
+ * @param {string} imageDataUrl - 图片的Data URL
+ * @returns {Promise<string>} 识别出的文字
+ */
+async function recognizeText(imageDataUrl) {
+    // 加载Tesseract库
+    await loadTesseractLibrary();
+    
+    // 使用改进的预处理函数 - 只处理左下角1/6区域(3×2网格)
+    const processedImage = await preprocessImage(imageDataUrl);
+    
+    // 可选：添加调试代码，查看预处理后的图像
+    /*
+    const debugImg = document.createElement('img');
+    debugImg.src = processedImage;
+    debugImg.style.position = 'fixed';
+    debugImg.style.top = '10px';
+    debugImg.style.right = '10px';
+    debugImg.style.zIndex = '9999';
+    debugImg.style.border = '2px solid red';
+    debugImg.style.maxWidth = '200px';
+    document.body.appendChild(debugImg);
+    setTimeout(() => document.body.removeChild(debugImg), 5000);
+    */
+    
+    // 使用Tesseract识别文字
+    const result = await Tesseract.recognize(
+        processedImage,
+        'chi_sim+eng', // 中文简体和英文
+        { 
+            logger: m => {
+                // 只记录关键点的日志，减少控制台输出
+                if (m.status === 'recognizing text' && m.progress === 1) {
+                    console.log('OCR识别完成');
+                }
+            }
+        }
+    );
+    
+    // 提取识别的文字
+    const recognizedText = result.data.text;
+    return recognizedText;
+}
+
+    
+/**
+ * 从图片中识别价格 - 优化正则表达式以提高价格匹配率
+ * @param {string} imageDataUrl - 图片的Data URL
+ * @returns {Promise<string|null>} 识别出的价格，如果没有找到则返回null
+ */
+async function recognizePrice(imageDataUrl) {
+    try {
+        // 识别图片中的所有文字
+        const recognizedText = await recognizeText(imageDataUrl);
+        console.log('识别到的文字:', recognizedText);
+        
+        // 使用更复杂的正则表达式匹配价格
+        // 匹配模式更全面，包括各种价格表示法
+        const pricePatterns = [
+            // 匹配"折后约￥"或"折后价￥"后的价格
+            /(?:折后约￥|折后价￥|￥|折后价#|折后约#|#|折 后 约 #)([0-9]+(?:\.[0-9]+)?)/,
+            // 匹配纯数字价格（前后可能有符号如¥, $等）
+            /(?:¥|\$|€|\£|\s)([0-9]+(?:\.[0-9]+)?)/,
+            // 匹配中文数字价格
+            /价格?[：:]\s*([0-9]+(?:\.[0-9]+)?)/,
+            // 匹配"元"前面的数字
+            /([0-9]+(?:\.[0-9]+)?)\s*元/,
+            // 尝试识别促销价、现价等常见价格表述
+            /(?:促销价|现价|特价|优惠价|活动价)(?:[:：])?(?:\s)*([0-9]+(?:\.[0-9]+)?)/
+        ];
+        
+        // 尝试所有匹配模式
+        for (const pattern of pricePatterns) {
+            const match = recognizedText.match(pattern);
             if (match && match[1]) {
                 // 找到价格
                 const price = match[1];
@@ -122,57 +196,73 @@ window.OCRModule = (function() {
                     showNotification(`成功识别价格: ￥${price}`, 2000);
                 }
                 return price;
-            } else {
-                // 没有找到价格
-                if (typeof showNotification === 'function') {
-                    
-                }
-                return null;
             }
+        }
+        
+        // 没有找到价格
+        if (typeof showNotification === 'function') {
+            showNotification('未能识别价格', 2000);
+        }
+        return null;
+    } catch (error) {
+        console.error('价格识别失败:', error);
+        if (typeof showNotification === 'function') {
+            showNotification('识别过程发生错误', 2000);
+        }
+        return null;
     }
+}
     
-    /**
-     * 从图片中静默识别价格，无通知
-     * 此函数专为水印自动填充设计
-     * @param {string} imageDataUrl - 图片的Data URL
-     * @returns {Promise<string|null>} 识别出的价格，如果没有找到则返回null
-     */
-    async function recognizePriceSilently(imageDataUrl) {
-        try {
-            // 加载Tesseract库
-            await loadTesseractLibrary();
-            
-            // 预处理图片 - 只处理底部1/3区域
-            const processedImage = await preprocessImage(imageDataUrl);
-            
-            // 使用Tesseract识别文字 - 不显示通知
-            const result = await Tesseract.recognize(
-                processedImage,
-                'chi_sim+eng', // 中文简体和英文
-                { 
-                    logger: m => console.log(m)
-                }
-            );
-            
-            // 提取识别的文字
-            const recognizedText = result.data.text;
-            console.log('识别到的文字:', recognizedText);
-            
-            // 使用正则表达式匹配价格
-            const priceRegex = /(?:折后约￥|折后价￥|￥|折后价#|折后约#|#|折 后 约 #)([0-9]+(?:\.[0-9]+)?)/;
-            const match = recognizedText.match(priceRegex);
-            
+/**
+ * 从图片中静默识别价格，无通知 - 使用同样改进的算法
+ * 此函数专为水印自动填充设计
+ * @param {string} imageDataUrl - 图片的Data URL
+ * @returns {Promise<string|null>} 识别出的价格，如果没有找到则返回null
+ */
+async function recognizePriceSilently(imageDataUrl) {
+    try {
+        // 加载Tesseract库
+        await loadTesseractLibrary();
+        
+        // 预处理图片 - 使用改进的预处理，只处理左下角1/6区域(3×2网格)
+        const processedImage = await preprocessImage(imageDataUrl);
+        
+        // 使用Tesseract识别文字 - 不显示通知
+        const result = await Tesseract.recognize(
+            processedImage,
+            'chi_sim+eng', // 中文简体和英文
+            { 
+                logger: m => console.log(m)
+            }
+        );
+        
+        // 提取识别的文字
+        const recognizedText = result.data.text;
+        console.log('识别到的文字:', recognizedText);
+        
+        // 使用与recognizePrice相同的匹配模式
+        const pricePatterns = [
+            /(?:折后约￥|折后价￥|￥|折后价#|折后约#|#|折 后 约 #)([0-9]+(?:\.[0-9]+)?)/,
+            /(?:¥|\$|€|\£|\s)([0-9]+(?:\.[0-9]+)?)/,
+            /价格?[：:]\s*([0-9]+(?:\.[0-9]+)?)/,
+            /([0-9]+(?:\.[0-9]+)?)\s*元/,
+            /(?:促销价|现价|特价|优惠价|活动价)(?:[:：])?(?:\s)*([0-9]+(?:\.[0-9]+)?)/
+        ];
+        
+        for (const pattern of pricePatterns) {
+            const match = recognizedText.match(pattern);
             if (match && match[1]) {
                 return match[1];
-            } else {
-                return null;
             }
-        } catch (error) {
-            // 静默处理错误，仅记录日志
-            console.error('价格识别失败:', error);
-            return null;
         }
+        
+        return null;
+    } catch (error) {
+        // 静默处理错误，仅记录日志
+        console.error('价格识别失败:', error);
+        return null;
     }
+}
     
     /**
      * 处理单个容器的识别
@@ -309,7 +399,7 @@ window.OCRModule = (function() {
                 // 过滤出已有图片的选中容器
                 const selectedWithImages = selectedContainers.filter(container => {
                     const img = container.querySelector('img');
-                    return img && img.style.display !== 'none' && !img.src.includes('/api/placeholder/');
+                    return img && img.style.display !== 'none' && img.src;
                 });
                 
                 if (selectedWithImages.length === 0) {
@@ -338,7 +428,7 @@ window.OCRModule = (function() {
                 // 过滤出已有图片的容器
                 const containersWithImages = Array.from(allProductImages).filter(container => {
                     const img = container.querySelector('img');
-                    return img && img.style.display !== 'none' && !img.src.includes('/api/placeholder/');
+                    return img && img.style.display !== 'none' && img.src;
                 });
                 
                 // 检查是否有图片可识别

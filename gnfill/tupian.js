@@ -31,7 +31,7 @@ function initProductGrid() {
         productItem.className = 'product-item';
         productItem.innerHTML = `
             <div class="product-image" data-id="product-img-${i}" style="padding-bottom: ${aspectRatio}%">
-                <img src="/api/placeholder/${productWidth}/${productHeight}" alt="" style="display: none;" id="product-img-${i}">
+                <img src="" alt="" style="display: none;" id="product-img-${i}">
                 <div class="delete-btn" style="display: none;" onclick="deleteImage('product-img-${i}')">×</div>
                 <label class="upload-btn" for="upload-${i}">
                     <span class="upload-icon">+</span>
@@ -170,7 +170,7 @@ function deleteImage(imgId) {
     if (img) {
         // 隐藏图片
         img.style.display = 'none';
-        img.src = '';
+        img.src = ''; // 直接清空src，不设置占位图
         
         // 如果是头部或底部图片，重置样式
         if (imgId === 'header-img' || imgId === 'footer-img') {
@@ -198,8 +198,8 @@ function deleteImage(imgId) {
         
         // 查找对应的父容器，如果存在水印元素，也将其重置
         const containerSelector = imgId === 'header-img' ? '.header-image' : 
-                                 imgId === 'footer-img' ? '.footer-image' : 
-                                 `.product-image[data-id="${imgId}"]`;
+                                imgId === 'footer-img' ? '.footer-image' : 
+                                `.product-image[data-id="${imgId}"]`;
         
         const container = document.querySelector(containerSelector);
         if (container) {
@@ -298,13 +298,22 @@ window.handleFileUpload = function(event) {
     
     let imgId;
     let displayMode = 'stretch'; // 默认显示模式
+    let isDefaultImage = false; // 标记是否为默认图片
     
     if (input.id === 'upload-header') {
         imgId = 'header-img';
         displayMode = document.getElementById('header-display').value;
+        // 检查文件名是否为"头部.jpg"
+        if (files[0].name === '头部.jpg') {
+            isDefaultImage = true;
+        }
     } else if (input.id === 'upload-footer') {
         imgId = 'footer-img';
         displayMode = document.getElementById('footer-display').value;
+        // 检查文件名是否为"底部.jpg"
+        if (files[0].name === '底部.jpg') {
+            isDefaultImage = true;
+        }
     } else {
         imgId = input.id.replace('upload-', 'product-img-');
         displayMode = document.getElementById('product-display').value;
@@ -318,8 +327,8 @@ window.handleFileUpload = function(event) {
         // 获取图片数据URL
         const imageDataUrl = e.target.result;
         
-        // 保存到本地存储
-        if (typeof addImageToStorage === 'function') {
+        // 保存到本地存储，但默认图片不保存
+        if (!isDefaultImage && typeof addImageToStorage === 'function') {
             addImageToStorage(imageDataUrl, file.name);
         }
         
@@ -330,7 +339,7 @@ window.handleFileUpload = function(event) {
             img.src = imageDataUrl;
             img.style.display = "block";
             
-            // 应用选择的显示模式 - 统一使用 applyDisplayMode 函数
+            // 应用选择的显示模式
             if (typeof applyDisplayMode === 'function') {
                 applyDisplayMode(imgId, displayMode);
             }
@@ -363,9 +372,12 @@ window.handleFileUpload = function(event) {
             
             const reader = new FileReader();
             reader.onload = function(e) {
-                // 保存到本地存储
+                // 检查文件名是否为默认图片
+                const isDefaultSlotImage = file.name === '头部.jpg' || file.name === '底部.jpg';
+                
+                // 保存到本地存储，但默认图片不保存
                 const imageDataUrl = e.target.result;
-                if (typeof addImageToStorage === 'function') {
+                if (!isDefaultSlotImage && typeof addImageToStorage === 'function') {
                     addImageToStorage(imageDataUrl, file.name);
                 }
                 
@@ -374,7 +386,7 @@ window.handleFileUpload = function(event) {
                     img.src = imageDataUrl;
                     img.style.display = "block";
                     
-                    // 应用选择的显示模式 - 同样使用 applyDisplayMode
+                    // 应用选择的显示模式
                     if (typeof applyDisplayMode === 'function') {
                         applyDisplayMode(slot.imgId, displayMode);
                     }

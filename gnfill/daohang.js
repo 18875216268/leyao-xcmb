@@ -39,14 +39,9 @@ function applyContainerSettings() {
     const footerSrc = footerImg.src;
     const footerWasDisplayed = footerImg.style.display !== 'none';
     
-    // 更新头部占位图尺寸
-    headerImg.src = `/api/placeholder/${containerWidth}/${headerHeight}`;
-    
-    // 更新底部占位图尺寸
-    footerImg.src = `/api/placeholder/${containerWidth}/${footerHeight}`;
-    
     // 恢复用户上传的头部图片
-    if (headerWasDisplayed && headerSrc && !headerSrc.includes('/api/placeholder/')) {
+    if (headerWasDisplayed && headerSrc) {
+        // 修改判断条件，不再检查是否为占位图
         headerImg.src = headerSrc;
         headerImg.style.display = 'block';
         
@@ -64,7 +59,8 @@ function applyContainerSettings() {
     }
     
     // 恢复用户上传的底部图片
-    if (footerWasDisplayed && footerSrc && !footerSrc.includes('/api/placeholder/')) {
+    if (footerWasDisplayed && footerSrc) {
+        // 修改判断条件，不再检查是否为占位图
         footerImg.src = footerSrc;
         footerImg.style.display = 'block';
         

@@ -284,13 +284,21 @@ function loadDefaultHeaderFooterImages() {
     loadImageWithFallback('img/底部.jpg', 'footer-img', '底部');
 }
 
-// 加载图片并处理可能的错误
-function loadImageWithFallback(imgPath, targetId, imageName) {
+/**
+ * 加载图片并处理可能的错误 - 修改后的版本
+ * 
+ * @param {string} imgPath - 默认图片路径
+ * @param {string} targetId - 目标图片元素ID
+ * @param {string} imageName - 图片名称描述
+ * @param {boolean} addToHistory - 是否添加到历史记录，默认为false
+ */
+function loadImageWithFallback(imgPath, targetId, imageName, addToHistory = false) {
     const img = document.getElementById(targetId);
     if (!img) return;
 
     // 检查图片是否已经有内容
-    if (img.src && img.src !== '' && !img.src.includes('/api/placeholder/')) {
+    // 修改判断，不再特别检查占位图
+    if (img.src && img.src !== '' && img.style.display !== 'none') {
         // 图片已经有内容，不需要加载默认图片
         return;
     }
@@ -330,8 +338,8 @@ function loadImageWithFallback(imgPath, targetId, imageName) {
             deleteBtn.style.display = 'block';
         }
         
-        // 保存到历史记录
-        if (typeof addImageToStorage === 'function') {
+        // 仅当addToHistory为true时才保存到历史记录
+        if (addToHistory && typeof addImageToStorage === 'function') {
             tempImg.onload = null; // 防止循环
             fetch(imgPath)
                 .then(response => response.blob())
@@ -356,6 +364,7 @@ function loadImageWithFallback(imgPath, targetId, imageName) {
     // 开始加载图片
     tempImg.src = imgPath;
 }
+
 
 // 初始化下载按钮
 function initDownloadButton() {
@@ -771,6 +780,205 @@ setTimeout(applyWatermarkSettings, 100);
 document.addEventListener('DOMContentLoaded', function() {
 // 添加到现有的DOMContentLoaded事件处理中
 setTimeout(initResetSettingsButton, 300); // 略微延迟确保DOM已完全加载
+});
+
+// 初始化二维码功能
+// 初始化二维码功能
+function initQRCodeFeature() {
+    // 创建二维码方块
+    const qrCodeBlock = document.createElement('div');
+    qrCodeBlock.className = 'qr-code-block';
+    qrCodeBlock.title = '上传二维码图片';
+    
+    // 创建QR码图片元素
+    const qrCodeImg = document.createElement('img');
+    qrCodeImg.id = 'qr-code-img';
+    qrCodeImg.style.display = 'none';
+    qrCodeImg.style.width = '100%';
+    qrCodeImg.style.height = '100%';
+    qrCodeImg.style.objectFit = 'fill'; // 固定拉伸
+    qrCodeBlock.appendChild(qrCodeImg);
+    
+    // 创建上传按钮
+    const uploadIcon = document.createElement('div');
+    uploadIcon.className = 'qr-upload-icon';
+    uploadIcon.innerHTML = '+';
+    qrCodeBlock.appendChild(uploadIcon);
+    
+    // 创建文件输入框
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    fileInput.id = 'qr-file-input';
+    qrCodeBlock.appendChild(fileInput);
+    
+    // 创建删除按钮
+    const deleteBtn = document.createElement('div');
+    deleteBtn.className = 'qr-delete-btn';
+    deleteBtn.innerHTML = '×';
+    deleteBtn.style.display = 'none';
+    qrCodeBlock.appendChild(deleteBtn);
+    
+    // 修改为双击事件触发上传
+    qrCodeBlock.addEventListener('dblclick', function(e) {
+        // 阻止事件冒泡，避免触发其他事件
+        e.stopPropagation();
+        // 如果不是点击删除按钮，则触发文件选择
+        if (e.target !== deleteBtn) {
+            fileInput.click();
+        }
+    });
+    
+    // 添加文件选择事件
+    fileInput.addEventListener('change', handleQRCodeUpload);
+    
+    // 添加删除按钮事件
+    deleteBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        deleteQRCode();
+    });
+    
+    // 将二维码方块添加到容器
+    const footerWrapper = document.querySelector('.footer-wrapper');
+    if (footerWrapper) {
+        footerWrapper.appendChild(qrCodeBlock);
+        
+        // 设置初始尺寸
+        updateQRCodeSize();
+    }
+    
+    // 监听底部高度变化
+    const footerHeightInput = document.getElementById('footer-height');
+    if (footerHeightInput) {
+        footerHeightInput.addEventListener('input', updateQRCodeSize);
+    }
+}
+
+// 更新二维码尺寸
+// 更新二维码尺寸和位置 - 修复垂直居中问题
+function updateQRCodeSize() {
+    const footerHeight = parseInt(document.getElementById('footer-height').value) || 155;
+    const qrCodeBlock = document.querySelector('.qr-code-block');
+    
+    if (qrCodeBlock) {
+        const size = Math.floor(footerHeight * 3/4); // 设置为底部高度的3/4
+        const margin = Math.floor(footerHeight * 1/4); // 设置边距为底部高度的1/4
+        
+        qrCodeBlock.style.width = size + 'px';
+        qrCodeBlock.style.height = size + 'px';
+        qrCodeBlock.style.right = margin + 'px';
+        
+        // 修改: 从底部边距调整为垂直居中
+        // 计算垂直居中的位置 = (底部高度 - 二维码高度) / 2
+        const verticalCenter = Math.floor((footerHeight - size) / 2);
+        qrCodeBlock.style.bottom = verticalCenter + 'px';
+    }
+}
+
+// 处理二维码上传
+function handleQRCodeUpload(event) {
+    const input = event.target;
+    const files = input.files;
+    
+    // 如果没有文件被选择，直接返回
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        const qrCodeImg = document.getElementById('qr-code-img');
+        const uploadIcon = document.querySelector('.qr-upload-icon');
+        const deleteBtn = document.querySelector('.qr-delete-btn');
+        const qrCodeBlock = document.querySelector('.qr-code-block');
+        
+        if (qrCodeImg && uploadIcon && deleteBtn) {
+            qrCodeImg.src = e.target.result;
+            qrCodeImg.style.display = 'block';
+            uploadIcon.style.display = 'none';
+            deleteBtn.style.display = 'block';
+            
+            // 保存到本地存储
+            localStorage.setItem('qrCodeImage', e.target.result);
+            
+            // 重要：清除选中状态，确保不会持续显示蒙版
+            if (qrCodeBlock && qrCodeBlock.classList.contains('selected')) {
+                qrCodeBlock.classList.remove('selected');
+            }
+            
+            // 显示通知
+            if (typeof showNotification === 'function') {
+                showNotification('二维码已更新');
+            }
+        }
+    };
+    
+    reader.readAsDataURL(file);
+    
+    // 重要：清空文件输入，确保下次可以再次选择同一个文件
+    input.value = '';
+}
+
+// 删除二维码
+function deleteQRCode() {
+    const qrCodeImg = document.getElementById('qr-code-img');
+    const uploadIcon = document.querySelector('.qr-upload-icon');
+    const deleteBtn = document.querySelector('.qr-delete-btn');
+    const fileInput = document.getElementById('qr-file-input');
+    const qrCodeBlock = document.querySelector('.qr-code-block');
+    
+    if (qrCodeImg && uploadIcon && deleteBtn) {
+        qrCodeImg.src = '';
+        qrCodeImg.style.display = 'none';
+        uploadIcon.style.display = 'block';
+        deleteBtn.style.display = 'none';
+        
+        // 从本地存储中删除
+        localStorage.removeItem('qrCodeImage');
+        
+        // 重要：清空文件输入，确保下次可以再次选择同一个文件
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        
+        // 重要：移除选中状态，确保蒙版不会持续显示
+        if (qrCodeBlock && qrCodeBlock.classList.contains('selected')) {
+            qrCodeBlock.classList.remove('selected');
+        }
+        
+        // 显示通知
+        if (typeof showNotification === 'function') {
+            showNotification('二维码已删除');
+        }
+    }
+}
+
+// 从本地存储加载二维码
+function loadQRCodeFromStorage() {
+    const qrCodeData = localStorage.getItem('qrCodeImage');
+    
+    if (qrCodeData) {
+        const qrCodeImg = document.getElementById('qr-code-img');
+        const uploadIcon = document.querySelector('.qr-upload-icon');
+        const deleteBtn = document.querySelector('.qr-delete-btn');
+        
+        if (qrCodeImg && uploadIcon && deleteBtn) {
+            qrCodeImg.src = qrCodeData;
+            qrCodeImg.style.display = 'block';
+            uploadIcon.style.display = 'none';
+            deleteBtn.style.display = 'block';
+        }
+    }
+}
+
+// 在页面加载完成后初始化二维码功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化二维码功能
+    setTimeout(function() {
+        initQRCodeFeature();
+        loadQRCodeFromStorage();
+    }, 300);
 });
 
 // 导出为全局函数

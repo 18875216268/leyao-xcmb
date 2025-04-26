@@ -94,7 +94,7 @@ window.YuLan = (function() {
             
             // 图片加载错误处理
             previewImage.onerror = function() {
-                this.src = '/api/placeholder/400/300';
+                this.src = '';
                 this.alt = '图片加载失败';
                 console.error('预览图片加载失败:', imageUrl);
             };

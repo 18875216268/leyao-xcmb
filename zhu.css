@@ -410,3 +410,77 @@ body {
 .reset-settings-btn:hover {
     background-color: #2A3E9C;
 }
+
+/* 二维码方块容器修复 */
+.qr-code-block {
+    position: absolute;
+    width: 116px;  /* 默认值，会被JS动态调整 */
+    height: 116px; /* 默认值，会被JS动态调整 */
+    right: 38px;   /* 默认值，会被JS动态调整 */
+    bottom: 38px;  /* 默认值，会被JS动态调整 */
+    background-color: transparent; /* 透明背景 */
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-sizing: border-box;
+    border: none; /* 移除默认边框 */
+}
+
+/* 只在悬浮时显示蒙版效果，移除选中状态的蒙版 */
+.qr-code-block:hover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* 鼠标悬浮状态 - 去掉直接设置背景 */
+.qr-code-block:hover {
+    border: none;
+}
+
+/* 上传图标 */
+.qr-upload-icon {
+    font-size: 32px;
+    color: white; /* 改为白色 */
+    opacity: 0; /* 默认隐藏 */
+    transition: opacity 0.2s;
+    position: relative; /* 添加相对定位 */
+    z-index: 15; /* 确保在蒙版之上 */
+}
+
+/* 悬浮时显示上传图标 */
+.qr-code-block:hover .qr-upload-icon {
+    opacity: 1;
+}
+
+/* 二维码删除按钮 - 移除背景 */
+.qr-delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    background-color: transparent; /* 移除背景 */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 12;
+}
+
+/* 悬浮时显示删除按钮 */
+.qr-code-block:hover .qr-delete-btn {
+    opacity: 1;
+}

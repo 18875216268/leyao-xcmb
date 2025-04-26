@@ -261,7 +261,7 @@ const PreviewModule = (function() {
         setupHistoryPreviews();
     }
     
-    /**
+     /**
      * 为主区域(头部、底部、产品区域)设置预览
      */
     function setupMainAreaPreviews() {
@@ -269,7 +269,7 @@ const PreviewModule = (function() {
         const headerImage = document.querySelector('.header-image');
         if (headerImage) {
             const img = headerImage.querySelector('#header-img');
-            if (img && img.style.display !== 'none' && !img.src.includes('/api/placeholder/')) {
+            if (img && img.style.display !== 'none' && img.src) {
                 addPreviewButton(headerImage, img.src);
             }
         }
@@ -278,7 +278,7 @@ const PreviewModule = (function() {
         const footerImage = document.querySelector('.footer-image');
         if (footerImage) {
             const img = footerImage.querySelector('#footer-img');
-            if (img && img.style.display !== 'none' && !img.src.includes('/api/placeholder/')) {
+            if (img && img.style.display !== 'none' && img.src) {
                 addPreviewButton(footerImage, img.src);
             }
         }
@@ -287,7 +287,7 @@ const PreviewModule = (function() {
         const productImages = document.querySelectorAll('.product-image');
         productImages.forEach(container => {
             const img = container.querySelector('img[id^="product-img-"]');
-            if (img && img.style.display !== 'none' && !img.src.includes('/api/placeholder/')) {
+            if (img && img.style.display !== 'none' && img.src) {
                 addPreviewButton(container, img.src);
             }
         });

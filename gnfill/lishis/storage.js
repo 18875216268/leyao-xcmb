@@ -70,13 +70,70 @@ function cleanupOldImages() {
 
 // 添加图片到本地存储
 async function addImageToStorage(imageData, fileName) {
-    // 创建一个新的图片对象，移除价格信息
+    // 检查是否为默认图片名称（头部.jpg或底部.jpg）
+    if (fileName === '头部.jpg' || fileName === '底部.jpg' || fileName === '头部' || fileName === '底部') {
+        console.log(`跳过默认图片的历史记录：${fileName}`);
+        return -1; // 返回-1表示跳过
+    }
+    
+    // 检查是否已存在相同文件名的图片
+    const existingIndex = imageStorage.images.findIndex(img => 
+        img.name === fileName || (fileName.length > 15 && img.name.includes(fileName.substring(0, 10)))
+    );
+    
+    if (existingIndex !== -1) {
+        // 已存在相同文件名的图片，更新它而不是添加新条目
+        const existingId = imageStorage.images[existingIndex].id;
+        
+        // 更新图片数据
+        imageStorage.images[existingIndex].data = imageData;
+        imageStorage.images[existingIndex].timestamp = new Date().toISOString();
+        
+        // 保存到本地存储
+        saveToLocalStorage();
+        
+        // 更新历史面板中的显示
+        const historyItem = document.querySelector(`.history-item[data-image-id="${existingId}"]`);
+        if (historyItem) {
+            const thumbnail = historyItem.querySelector('.history-thumbnail img');
+            if (thumbnail) {
+                thumbnail.src = imageData;
+            }
+            
+            // 更新时间显示
+            const timeElement = historyItem.querySelector('.history-item-time');
+            if (timeElement) {
+                const date = new Date();
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                
+                // 保留删除按钮元素
+                const deleteBtn = timeElement.querySelector('.history-action-delete');
+                timeElement.innerHTML = `${year}/${month}/${day} ${hours}:${minutes}`;
+                
+                if (deleteBtn) {
+                    timeElement.appendChild(deleteBtn);
+                }
+            }
+        }
+        
+        // 更新分页（如果可用）
+        if (typeof updatePagination === 'function') {
+            updatePagination();
+        }
+        
+        return existingId; // 返回更新的图片ID
+    }
+    
+    // 创建一个新的图片对象
     const newImage = {
         id: imageStorage.nextId++,
         data: imageData,
         name: fileName || `图片 ${imageStorage.images.length + 1}`,
         timestamp: new Date().toISOString()
-        // 移除price字段
     };
     
     // 添加到存储数组
@@ -95,6 +152,7 @@ async function addImageToStorage(imageData, fileName) {
     
     return newImage.id; // 返回新图片的ID
 }
+
 
 // 加载历史图片到面板
 function loadHistoryImages() {
